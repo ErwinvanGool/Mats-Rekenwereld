@@ -105,7 +105,7 @@ Always follow this exact process:
 12. Give a verdict
 
 ## Output format
-Always structure your output exactly like this:
+Always structure your output exactly like this in a code block so dev can copy it as an .md file in git:
 
 ### Review Summary
 - Review number: [sequential number, e.g., 1, 2, 3]
