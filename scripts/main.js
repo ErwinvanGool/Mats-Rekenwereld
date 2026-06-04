@@ -20,7 +20,8 @@ import { state, resetSession }        from './state.js';
 import { navigateTo, initNavigation } from './navigation.js';
 import { buildQuestionSet, checkAnswer, generateChoices } from './math.js';
 import { earnBlocksForAnswer, evaluateBadges, blockDisplayText, stickerDisplayText, badgeListHtml } from './rewards.js';
-import { placePart, getActiveBuild, buildPaletteHtml, buildCanvasHtml, buildReferenceHtml, getAvailableBuilds, setActiveBuild, isBuildComplete } from './builds.js';
+import { placePart, getActiveBuild, buildPaletteHtml, buildCanvasHtml, buildReferenceHtml, getAvailableBuilds, setActiveBuild, isBuildComplete, isPartPlaced, isPartUnlocked } from './builds.js';
+import { initLegoCanvas, destroyLegoCanvas, setLegoSelectedPart, getLegoSelectedPart, renderLegoCanvas } from './lego-canvas.js';
 import { initDragDrop }               from './dragdrop.js';
 import { recordAnswer, recordSession, renderProgressScreen } from './progress.js';
 import { initPinScreen, initParentPanel } from './parent-settings.js';
@@ -38,6 +39,9 @@ let _wrongAttempts = 0;
 
 /** Build IDs that were already unlocked before this screen visit (for unlock animation). */
 let _previouslyUnlockedBuilds = [];
+
+/** The build ID currently shown in the LEGO canvas (null when HTML mode is active). */
+let _currentCanvasBuildId = null;
 
 // ---------------------------------------------------------------------------
 // Bootstrap
@@ -63,7 +67,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // 6. Workshop drag-and-drop
   const workshop = document.getElementById('screen-builds');
   if (workshop) initDragDrop(workshop);
-  workshop?.addEventListener('partDropped', onPartDropped);
+  workshop?.addEventListener('partDropped',      onPartDropped);
+  workshop?.addEventListener('legoBrickPlaced',  onLegoBrickPlaced);
 
   // 7. Parent panel
   const pinScreen    = document.getElementById('screen-parent');
@@ -97,6 +102,12 @@ function updateBlockDisplay() {
 
 /** @param {CustomEvent} event */
 function onScreenChange({ detail: { screenId } }) {
+  // When leaving the builds screen, release the canvas
+  if (screenId !== 'screen-builds') {
+    destroyLegoCanvas();
+    _currentCanvasBuildId = null;
+  }
+
   if (screenId === 'screen-progress') {
     const container = document.querySelector('#screen-progress .progress__content');
     if (container) renderProgressScreen(container);
@@ -482,21 +493,106 @@ function renderBuildsScreen() {
     }
   }
 
-  // Reference preview
-  const referenceEl = screen.querySelector('[data-build-reference]');
-  if (referenceEl) referenceEl.innerHTML = buildReferenceHtml();
+  // ---- Build view: LEGO canvas mode vs. HTML drag-and-drop mode ----
+  const htmlRefEl  = screen.querySelector('[data-build-reference]');
+  const htmlCvsEl  = screen.querySelector('[data-build-canvas]');
+  const legoCvsEl  = screen.querySelector('#lego-build-canvas');
+  const paletteEl  = screen.querySelector('[data-build-palette]');
 
-  // Parts palette
-  const paletteEl = screen.querySelector('[data-build-palette]');
-  if (paletteEl) paletteEl.innerHTML = buildPaletteHtml();
+  if (build.brickGrid) {
+    // LEGO canvas mode
+    if (htmlRefEl) htmlRefEl.hidden = true;
+    if (htmlCvsEl) htmlCvsEl.hidden = true;
+    if (legoCvsEl) legoCvsEl.hidden = false;
 
-  // Visual build canvas
-  const canvasEl = screen.querySelector('[data-build-canvas]');
-  if (canvasEl) canvasEl.innerHTML = buildCanvasHtml();
+    if (legoCvsEl && _currentCanvasBuildId !== build.id) {
+      _currentCanvasBuildId = build.id;
+      initLegoCanvas(legoCvsEl, build);
+    } else if (legoCvsEl) {
+      renderLegoCanvas();
+    }
+    _renderLegoPalette(paletteEl, build);
+  } else {
+    // HTML drag-and-drop mode
+    _currentCanvasBuildId = null;
+    destroyLegoCanvas();
+    if (htmlRefEl) { htmlRefEl.hidden = false; htmlRefEl.innerHTML = buildReferenceHtml(); }
+    if (htmlCvsEl) { htmlCvsEl.hidden = false; htmlCvsEl.innerHTML = buildCanvasHtml(); }
+    if (legoCvsEl) legoCvsEl.hidden = true;
+    if (paletteEl) paletteEl.innerHTML = buildPaletteHtml();
+  }
 
   // Hide completed overlay when switching builds
   const overlay = screen.querySelector('[data-build-complete-overlay]');
   if (overlay && !isBuildComplete(build.id)) overlay.hidden = true;
+}
+
+/**
+ * Render the LEGO parts-tray palette for a canvas-mode build.
+ * @param {HTMLElement|null} paletteEl
+ * @param {object} build
+ */
+function _renderLegoPalette(paletteEl, build) {
+  if (!paletteEl) return;
+  paletteEl.className = 'build-palette lego-tray';
+  const selectedId = getLegoSelectedPart();
+  paletteEl.innerHTML = build.brickGrid.bricks.map((brick) => {
+    const placed   = isPartPlaced(brick.partId);
+    const unlocked = isPartUnlocked({ blocksToUnlock: brick.blocksToUnlock });
+    const disabled = placed || !unlocked;
+    const stateClass = placed    ? ' lego-chip--placed'
+                     : !unlocked ? ' lego-chip--locked'
+                     :             ' lego-chip--available';
+    const selectedClass = (!disabled && selectedId === brick.partId) ? ' lego-chip--selected' : '';
+    const ariaLabel = brick.label
+      + (placed    ? ' – geplaatst'                              : '')
+      + (!unlocked ? ` – ${brick.blocksToUnlock} blokken nodig`  : '');
+    return `<button
+      class="lego-chip${stateClass}${selectedClass}"
+      data-lego-part-id="${brick.partId}"
+      style="--chip-color: ${brick.color}"
+      ${disabled ? 'disabled' : ''}
+      aria-label="${ariaLabel}"
+    ><span class="lego-chip__studs"><span class="lego-chip__stud"></span><span class="lego-chip__stud"></span></span
+    ><span class="lego-chip__label">${placed ? '✅ ' + brick.label : !unlocked ? '🔒 ' + brick.blocksToUnlock + ' 🧱' : brick.label}</span></button>`;
+  }).join('');
+
+  paletteEl.querySelectorAll('[data-lego-part-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const partId = btn.dataset.legoPartId;
+      const isAlreadySelected = getLegoSelectedPart() === partId;
+      const next = isAlreadySelected ? null : partId;
+      setLegoSelectedPart(next);
+      paletteEl.querySelectorAll('[data-lego-part-id]').forEach((b) =>
+        b.classList.toggle('lego-chip--selected', b.dataset.legoPartId === next),
+      );
+    });
+  });
+}
+
+/** Handle a brick-placement event dispatched by lego-canvas.js.
+ *  @param {CustomEvent} event */
+function onLegoBrickPlaced({ detail: { partId, atDesignPosition } }) {
+  if (!atDesignPosition) {
+    // Decorative free-placement – fun, but not persisted
+    showBuildFeedback('🎨 Vrij geplaatst!', true);
+    playBrickSound();
+    return;
+  }
+
+  const { placed, buildCompleted } = placePart(partId);
+  if (placed) {
+    updateBlockDisplay();
+    // Refresh palette and canvas without re-initialising (preserves deco bricks)
+    const screen = document.getElementById('screen-builds');
+    if (screen) _renderLegoPalette(screen.querySelector('[data-build-palette]'), getActiveBuild());
+    renderLegoCanvas();
+    showBuildFeedback('⭐ Super! Goed geplaatst!', true);
+    playBrickSound();
+    if (buildCompleted) {
+      setTimeout(() => showBuildComplete(), 600);
+    }
+  }
 }
 
 /** @param {CustomEvent} event */

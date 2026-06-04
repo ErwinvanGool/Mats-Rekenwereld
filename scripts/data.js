@@ -93,6 +93,25 @@ export const BUILDS = [
       { id: 'car_wheel_rr', label: 'Wiel achter-rechts', blocksToUnlock: 4, slot: 'wheel_rr', emoji: '⚫', color: '#444444' },
       { id: 'car_window',   label: 'Raam',               blocksToUnlock: 6, slot: 'window',   emoji: '🔵', color: '#87CEEB' },
     ],
+    /**
+     * brickGrid defines the isometric LEGO canvas layout for this build.
+     * Each entry maps to the same part IDs as `parts[]` above.
+     * col/row: top-left position on the baseplate (in studs)
+     * w/d: size in studs (width along col-axis, depth along row-axis)
+     * layer: vertical layer (0 = on baseplate)
+     */
+    brickGrid: {
+      baseplateWidth: 10,
+      baseplateDepth: 6,
+      bricks: [
+        { partId: 'car_body',     col: 1, row: 1, layer: 0, w: 8, d: 4, color: '#FF6B35', label: 'Carrosserie',        blocksToUnlock: 0 },
+        { partId: 'car_wheel_fl', col: 0, row: 0, layer: 0, w: 2, d: 2, color: '#444444', label: 'Wiel voor-links',    blocksToUnlock: 2 },
+        { partId: 'car_wheel_fr', col: 8, row: 0, layer: 0, w: 2, d: 2, color: '#444444', label: 'Wiel voor-rechts',   blocksToUnlock: 2 },
+        { partId: 'car_wheel_rl', col: 0, row: 4, layer: 0, w: 2, d: 2, color: '#444444', label: 'Wiel achter-links',  blocksToUnlock: 4 },
+        { partId: 'car_wheel_rr', col: 8, row: 4, layer: 0, w: 2, d: 2, color: '#444444', label: 'Wiel achter-rechts', blocksToUnlock: 4 },
+        { partId: 'car_window',   col: 3, row: 1, layer: 1, w: 4, d: 2, color: '#87CEEB', label: 'Raam',              blocksToUnlock: 6 },
+      ],
+    },
   },
   {
     id: 'house',
