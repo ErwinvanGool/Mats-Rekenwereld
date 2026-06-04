@@ -980,6 +980,7 @@ button:focus-visible {
   grid-template-columns: 220px 1fr;
   gap: 1.5rem;
   flex: 1;
+  min-height: 0;
 }
 
 /* Palette (left column) */
@@ -987,6 +988,8 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .builds__layout > aside > p {
@@ -1083,6 +1086,8 @@ button:focus-visible {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .builds__layout > main > p {
@@ -1264,7 +1269,12 @@ button:focus-visible {
 /* ============================================================
    BUILD FEEDBACK TOAST  (absolute inside position:relative screen)
    ============================================================ */
-.screen--builds { position: relative; }
+.screen--builds {
+  position: relative;
+  height: calc(100dvh - var(--header-height));
+  min-height: unset;
+  overflow: hidden;
+}
 
 .builds__feedback {
   position: absolute;
@@ -1721,6 +1731,15 @@ button:focus-visible {
   margin: 0.5rem;
 }
 
+.parent-pin__card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  flex: 1;
+}
+
 .parent-pin__title {
   font-size: var(--font-size-xl);
   font-weight: 900;
@@ -1801,6 +1820,12 @@ button:focus-visible {
 /* ============================================================
    PARENT PANEL (settings dashboard)
    ============================================================ */
+.screen--parent-panel {
+  height: calc(100dvh - var(--header-height));
+  min-height: unset;
+  overflow-y: auto;
+}
+
 .parent-panel {
   display: flex;
   flex-direction: column;
@@ -2114,6 +2139,7 @@ button:focus-visible {
 .nav-back {
   display: inline-flex;
   align-items: center;
+  align-self: flex-start;
   gap: 0.4rem;
   background: var(--color-surface);
   border: 3px solid var(--color-border);
