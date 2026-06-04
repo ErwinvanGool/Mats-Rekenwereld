@@ -224,6 +224,12 @@ button:focus-visible {
   font-weight: 900;
   letter-spacing: 0.04em;
   text-shadow: 0 2px 0 rgba(0,0,0,.20);
+  background: none;
+  border: none;
+  color: inherit;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
 }
 
 .app-header__star {
