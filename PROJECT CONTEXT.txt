@@ -1,0 +1,385 @@
+PROJECT CONTEXT
+
+We are building a browser-based educational game called "Mats Rekenwereld" for a 6-year-old child. The game is designed for iPad usage in landscape mode and must be deployable on GitHub Pages. The goal is to create a complete, polished, child-friendly web app that combines simple math practice with rewarding creative building gameplay.
+
+CORE GAME CONCEPT
+
+The core gameplay loop is:
+1. The child solves simple addition problems.
+2. Correct answers reward the child with building blocks.
+3. The child uses earned blocks in a playful drag-and-drop building activity.
+4. Completing or progressing in builds unlocks rewards, stickers, and new items on the world map.
+
+The game should feel joyful, motivating, visual, safe, and easy to understand without relying on reading ability. It should feel like a toy-like building adventure, inspired by colorful brick-building play.
+
+TARGET AUDIENCE
+
+The primary user is a 6-year-old child who:
+- loves building toys similar to Lego
+- is just starting to learn math
+- can barely read
+- uses an iPad
+- benefits from visual learning, repetition, positive reinforcement, sound effects, and simple interactions
+
+Because the child can barely read, the game must use:
+- very little text
+- large icons and illustrations
+- clear visual hierarchy
+- audio feedback
+- animations
+- bright and cheerful colors
+- large touch targets
+- simple navigation
+- immediate rewards
+
+The interface should never depend on reading long instructions. The game should teach mostly through visuals, motion, and interaction.
+
+PLATFORM AND TECHNICAL GOALS
+
+The app must:
+- run in the browser
+- work well on iPad
+- be optimized for landscape mode
+- be deployable on GitHub Pages
+- not require a backend
+- store progress locally with localStorage
+- use plain HTML, CSS, and JavaScript, or modular vanilla JavaScript
+- avoid heavy frameworks and unnecessary dependencies
+- remain lightweight and responsive
+- be easy to maintain and extend
+
+The app should be structured as a real project with modular code, clear file separation, and reusable logic. It should not be a one-file prototype unless explicitly requested.
+
+DESIGN GOALS
+
+The visual style should be:
+- colorful
+- playful
+- warm
+- friendly
+- toy-inspired
+- inviting for young children
+
+The experience should include:
+- cheerful animations
+- playful transitions
+- satisfying reward moments
+- fun sound effects
+- celebratory feedback such as fireworks or confetti
+- sticker rewards
+- clear visual states for success, progress, and unlocks
+
+The design should feel polished, not like a rough prototype.
+
+GAME STRUCTURE
+
+The game should include the following main screens or flows:
+1. Start screen
+2. World map screen titled "Mats Rekenwereld"
+3. Build selection flow
+4. Math challenge screen
+5. Building screen
+6. Reward feedback or reward modal
+7. Parent settings panel
+8. Progress overview or collection screen
+
+WORLD MAP
+
+The world map should act as the main hub of the game and be titled "Mats Rekenwereld".
+It should feel like a playful world with locations, islands, zones, or themed build destinations.
+Each build example should appear as a selectable destination on the map.
+
+The map should visually show:
+- locked builds
+- unlocked builds
+- completed builds
+- reward progression
+- playful movement or subtle animation where appropriate
+
+The world map should be exciting and rewarding to return to.
+
+MATH SYSTEM
+
+The game has two levels:
+- Level 1: addition up to 10
+- Level 2: addition up to 20, including crossing tens such as 8 + 7
+
+Math questions should be presented in different forms:
+- standard numeric format, such as 3 + 4 = ?
+- visual object-based format, such as 3 apples + 4 apples
+- other child-friendly visual themes such as stars, blocks, balloons, animals, or toys
+
+The game should not rely only on symbolic math. It should support visual counting and visual understanding.
+
+QUESTION PRESENTATION
+
+Math questions must be:
+- large and easy to read
+- visually simple
+- not cluttered
+- suitable for a young child
+- touch-friendly
+
+Questions should use:
+- large numbers
+- large images or object groups
+- consistent layout
+- animated or interactive feedback where useful
+
+ANSWER INPUT
+
+The child answers by selecting from multiple choice options.
+Requirements:
+- always show 3 large answer buttons
+- one correct answer
+- two plausible incorrect answers
+- answers must be easy to tap on iPad
+- answer placement can vary to avoid memorizing button position
+
+The child should never need to type an answer.
+
+MATH DIFFICULTY AND REWARDS
+
+Correct answers give building blocks.
+Reward logic:
+- easy problems can give 1 block
+- harder problems can give 2 or 3 blocks
+- 3 correct answers in a row gives +1 bonus block
+- 5 correct answers in a row gives 1 sticker reward
+
+The game should maintain a streak system and reward consistency.
+
+The reward loop must feel immediate and satisfying. After each correct answer, the child should clearly see that progress has been made, such as:
+- earned blocks
+- animated reward feedback
+- progress toward a build
+- sound effect
+- sparkles or mini celebration
+
+WRONG ANSWERS AND FEEDBACK
+
+Feedback must always be positive and encouraging.
+There should never be punishment, frustration, or negative language.
+
+Wrong answer behavior:
+- first wrong attempt: encourage retry in a friendly way
+- repeated wrong attempts: show a visual hint
+- hints can include highlighting quantities, showing grouped objects, or visual counting support
+- feedback should guide learning rather than simply marking failure
+
+The game should feel safe and supportive.
+
+BUILDING SYSTEM
+
+The building part of the game is one of the main rewards and should feel fun and tactile.
+
+Requirements:
+- after correct answers, the child earns blocks
+- those blocks can be used in a drag-and-drop building experience
+- the child should see a visual example or target object
+- building should feel playful and somewhat free, not overly strict
+- wrong placements should be allowed
+- the game should provide friendly feedback for placements
+- unfinished builds must be saved so the child can continue later
+
+The building system should not feel like only a rigid puzzle. It should feel like a guided creative activity.
+
+STARTER BUILD CONTENT
+
+Version 1 should include around 5 build examples.
+Suggested starter builds:
+- car
+- house
+- dinosaur
+- rocket
+- fire truck
+
+These can be adjusted, but the first version should offer variety and clear appeal to a young child.
+
+Each build should have:
+- a unique id
+- a title
+- a theme
+- a difficulty
+- a required number of blocks
+- an unlock condition
+- a visual reference
+- colors or block palette information
+- completion rewards
+- data needed for saving progress
+
+Each build can have a different difficulty and block requirement, so some builds are easier and some are more aspirational.
+
+REWARD AND PROGRESSION SYSTEM
+
+The game should include progression that feels motivating but not stressful.
+
+Progression should include:
+- unlocking new build examples
+- earning stickers
+- completing builds
+- achieving a high score or best streak
+- seeing a growing collection of completed items
+- returning to the world map to choose what to do next
+
+A completed build should trigger a special celebration, such as:
+- fireworks
+- confetti
+- sound effect
+- completion badge
+- sticker reward
+- unlock animation
+
+PROGRESS STORAGE
+
+Use localStorage to save the following:
+- unlocked builds
+- completed builds
+- unfinished builds
+- currently selected level
+- parent settings
+- stickers earned
+- high score
+- current or best streak if useful
+- total earned blocks if useful
+- last played state if useful
+
+Data should be stored in a clear and maintainable structure so it can be extended later.
+
+PARENT SETTINGS
+
+The game must include a parent settings area.
+
+The parent area should allow configuration of:
+- maximum number range
+- problem type
+- math difficulty
+- level selection
+- sound on or off
+- reset progress
+- viewing basic child progress
+
+Because the child is very young, parent settings should not be too easy to open by accident.
+There should be a simple parent gate, for example:
+- long press on a settings icon
+- simple parent confirmation step
+- another lightweight child-resistant interaction
+
+The parent settings panel should still remain simple and easy to maintain.
+
+SESSION LENGTH AND EXPERIENCE
+
+The ideal play session is around 10 minutes.
+This means the game loop should be satisfying in short sessions.
+
+The child should be able to:
+- answer a few questions
+- earn blocks quickly
+- make visible building progress
+- receive a reward
+- return later without losing progress
+
+The experience should encourage repeated short sessions rather than long, complex play.
+
+UX PRINCIPLES
+
+Always prioritize:
+- low reading demand
+- large touch targets
+- clear visual feedback
+- simple navigation
+- positive reinforcement
+- low frustration
+- delight and motivation
+- short interaction loops
+- consistency between screens
+- child-safe behavior
+
+Do not design the game like a typical productivity app. It must feel like a playful children's game.
+
+CHILD SAFETY REQUIREMENTS
+
+The app must be fully child-safe.
+That means:
+- no ads
+- no login
+- no in-app purchases
+- no external links in the child flow
+- no unsafe content
+- no dark patterns
+- no manipulative pressure
+- no unnecessary data collection
+
+All content should remain age-appropriate and friendly.
+
+AUDIO AND ANIMATION
+
+The game should include:
+- positive sound effects for correct answers
+- sounds for earning blocks
+- sounds for stickers and celebrations
+- optional background ambience only if lightweight
+- animated transitions where helpful
+- small playful UI motion
+- fireworks or confetti for major milestones
+
+Sound should be optional and manageable through parent settings.
+
+RESPONSIVENESS AND DEVICE BEHAVIOR
+
+The app should be optimized first for iPad landscape.
+UI requirements:
+- large buttons
+- large draggable elements
+- comfortable spacing
+- no tiny text
+- no tiny controls
+- touch-friendly interactions
+- responsive layout for tablet-sized screens
+
+It is acceptable if the game is primarily designed for landscape mode.
+
+CODE ORGANIZATION EXPECTATIONS
+
+The code should be modular and maintainable.
+Separate responsibilities clearly, for example:
+- app bootstrap
+- state management
+- localStorage persistence
+- navigation
+- math logic
+- rewards and streaks
+- build definitions
+- building interactions
+- parent settings
+- progress summaries
+
+Avoid putting all logic into a single file.
+Naming should remain consistent.
+Data structures should be simple and extendable.
+
+IMPLEMENTATION EXPECTATIONS
+
+When generating code, please:
+- think in terms of a real project, not a throwaway demo
+- keep the MVP complete and playable
+- include sample content for all starter builds
+- use placeholder graphics with CSS, SVG, or simple illustrations if needed
+- make the game feel polished enough to test with a child
+- favor readability and extensibility
+- provide code that can be deployed to GitHub Pages
+
+OUTPUT EXPECTATIONS
+
+When I ask for a specific module, screen, or file, always keep this project context in mind.
+All generated code should align with:
+- the child audience
+- the math-and-building reward loop
+- GitHub Pages deployment
+- localStorage persistence
+- modular architecture
+- touch-friendly iPad usage
+- playful, colorful, low-text design
+
+Do not ignore previous architectural decisions unless explicitly asked to change them.
+If a requested feature affects other modules or saved data, account for that and mention any needed updates.

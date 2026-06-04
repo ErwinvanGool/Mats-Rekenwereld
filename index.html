@@ -2,213 +2,666 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <meta name="description" content="Mats Rekenwereld – een leuk reken-avontuur voor Mats!" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <title>Mats Rekenwereld</title>
   <link rel="stylesheet" href="styles/styles.css" />
 </head>
 <body>
 
   <!-- ======================================================================
-       App header – visible on every screen
+       App header – persists across all screens (hidden on start/world-map)
+       Slots: back button (contextual) · title · star counter · parent gate
+       JS controls visibility via .app-header--hidden on screen-home
        ====================================================================== -->
-  <header class="app-header">
-    <span class="app-header__title">🌍 Mats Rekenwereld</span>
-    <span class="app-header__star" data-star-display>⭐ 0</span>
+  <header class="app-header" id="app-header" aria-label="Navigatiebalk">
+    <button class="app-header__back" id="header-back-btn"
+            aria-label="Terug" hidden>
+      &#8592;
+    </button>
+
+    <span class="app-header__title" aria-hidden="true">🌍 Mats Rekenwereld</span>
+
+    <div class="app-header__right">
+      <span class="app-header__stars" data-star-display aria-label="Verdiende sterren">
+        &#11088; <span data-star-count>0</span>
+      </span>
+      <button class="app-header__parent-btn"
+              id="parent-gate-btn"
+              data-nav="screen-parent"
+              aria-label="Ouderinstellingen openen">
+        &#128274;
+      </button>
+    </div>
   </header>
 
   <!-- ======================================================================
-       Screen: Home / Main menu
+       SCREEN 1 · Start / Splash
        ID: screen-home
+       First screen the child sees. Minimal text, big character, one big button.
+       Navigates to the world map on tap.
        ====================================================================== -->
-  <section id="screen-home" class="screen screen--active home" aria-label="Hoofdmenu">
-    <div class="home__hero">
-      <div class="home__avatar" aria-hidden="true">🧒</div>
-      <h1 class="home__title">Hallo Mats!</h1>
-      <p class="home__subtitle">Klaar om te rekenen?</p>
+  <section id="screen-home"
+           class="screen screen--active screen--no-header start-screen"
+           aria-label="Startscherm">
+
+    <div class="start-screen__bg" aria-hidden="true">
+      <span class="start-screen__cloud start-screen__cloud--1">&#9729;&#65039;</span>
+      <span class="start-screen__cloud start-screen__cloud--2">&#9729;&#65039;</span>
+      <span class="start-screen__star-deco start-screen__star-deco--1">&#11088;</span>
+      <span class="start-screen__star-deco start-screen__star-deco--2">&#10024;</span>
+      <span class="start-screen__star-deco start-screen__star-deco--3">&#11088;</span>
     </div>
 
-    <nav class="home__menu" aria-label="Hoofdnavigatie">
-      <button class="menu-btn menu-btn--math" data-nav="screen-operation"
-              aria-label="Ga naar rekenen">
-        <span class="menu-btn__icon">🔢</span>
-        Rekenen
+    <div class="start-screen__content">
+      <div class="start-screen__mascot" aria-hidden="true">&#129306;</div>
+      <h1 class="start-screen__title">Mats Rekenwereld</h1>
+      <p class="start-screen__subtitle">Hallo Mats! &#128075;</p>
+      <button class="start-screen__play-btn btn btn--cta"
+              data-nav="screen-worldmap"
+              aria-label="Begin het spel">
+        &#9654; Spelen!
       </button>
-      <button class="menu-btn menu-btn--builds" data-nav="screen-builds"
-              aria-label="Ga naar de bouwplaats">
-        <span class="menu-btn__icon">🏗️</span>
-        Bouwen
+    </div>
+
+    <footer class="start-screen__footer">
+      <button class="start-screen__parent-link"
+              data-nav="screen-parent"
+              aria-label="Ouderinstellingen">
+        &#128274; Ouders
       </button>
-      <button class="menu-btn menu-btn--progress" data-nav="screen-progress"
+    </footer>
+  </section>
+
+  <!-- ======================================================================
+       SCREEN 2 · World Map
+       ID: screen-worldmap
+       Main hub. Shows all build destinations as map locations.
+       JS: renderWorldMap() populates [data-worldmap-grid].
+       NOTE: add 'screen-worldmap' to SCREENS array in navigation.js
+       ====================================================================== -->
+  <section id="screen-worldmap"
+           class="screen screen--worldmap"
+           aria-label="Wereldkaart"
+           aria-hidden="true">
+
+    <div class="worldmap__scene" aria-hidden="true">
+      <span class="worldmap__deco worldmap__deco--sun">&#9728;&#65039;</span>
+      <span class="worldmap__deco worldmap__deco--cloud1">&#9729;&#65039;</span>
+      <span class="worldmap__deco worldmap__deco--cloud2">&#9928;&#65039;</span>
+      <span class="worldmap__deco worldmap__deco--tree1">&#127795;</span>
+      <span class="worldmap__deco worldmap__deco--tree2">&#127794;</span>
+      <span class="worldmap__deco worldmap__deco--hill">&#127956;&#65039;</span>
+    </div>
+
+    <header class="worldmap__header">
+      <h2 class="worldmap__title">&#127758; Mats Rekenwereld</h2>
+      <p class="worldmap__stars-summary" aria-live="polite">
+        &#11088; <span data-star-display data-star-count>0</span> sterren
+      </p>
+    </header>
+
+    <!-- Build destination pins: rendered by JS -->
+    <div class="worldmap__grid"
+         data-worldmap-grid
+         role="list"
+         aria-label="Bouwbestemmingen">
+      <!--
+        Each pin rendered by JS:
+        <div role="listitem"
+             class="map-pin [map-pin--locked|map-pin--active|map-pin--done]"
+             data-build-id="…"
+             data-nav="screen-build-select"
+             aria-label="…">
+          <span class="map-pin__icon">&#128663;</span>
+          <span class="map-pin__label">Auto</span>
+          <span class="map-pin__badge" aria-hidden="true">&#10003; / &#128274; / &#11088;0/5</span>
+        </div>
+      -->
+    </div>
+
+    <nav class="worldmap__nav" aria-label="Globale navigatie">
+      <button class="worldmap__nav-btn worldmap__nav-btn--math"
+              data-nav="screen-operation"
+              aria-label="Ga rekenen">
+        <span class="worldmap__nav-btn-icon" aria-hidden="true">&#128290;</span>
+        <span class="worldmap__nav-btn-label">Rekenen</span>
+      </button>
+      <button class="worldmap__nav-btn worldmap__nav-btn--progress"
+              data-nav="screen-progress"
               aria-label="Bekijk voortgang">
-        <span class="menu-btn__icon">📊</span>
-        Voortgang
-      </button>
-      <button class="menu-btn menu-btn--parent" data-nav="screen-parent"
-              aria-label="Ga naar ouderinstellingen">
-        <span class="menu-btn__icon">🔒</span>
-        Ouders
+        <span class="worldmap__nav-btn-icon" aria-hidden="true">&#127942;</span>
+        <span class="worldmap__nav-btn-label">Prestaties</span>
       </button>
     </nav>
   </section>
 
   <!-- ======================================================================
-       Screen: Operation selection
-       ID: screen-operation
+       SCREEN 3 · Build Selection
+       ID: screen-build-select
+       Shown when the child taps a map pin. Preview of the chosen build,
+       progress bar, and CTA to start/continue building.
+       JS: renderBuildSelect(buildId) populates [data-build-select-detail].
+       NOTE: add 'screen-build-select' to SCREENS array in navigation.js
        ====================================================================== -->
-  <section id="screen-operation" class="screen operation-screen" aria-label="Kies een oefening"
+  <section id="screen-build-select"
+           class="screen screen--build-select"
+           aria-label="Bouwproject kiezen"
            aria-hidden="true">
-    <button class="nav-back" data-nav="screen-home">← Terug</button>
-    <h2 class="operation-screen__title">Wat wil je oefenen?</h2>
-    <div class="operation-grid" data-operation-grid aria-label="Keuze van rekensoort">
-      <!-- Rendered dynamically by main.js → renderOperationCards() -->
+
+    <button class="nav-back" data-nav="screen-worldmap" aria-label="Terug naar kaart">
+      &#8592; Kaart
+    </button>
+
+    <!-- Build detail: filled by JS -->
+    <div class="build-select__detail" data-build-select-detail>
+      <!--
+        <div class="build-select__preview" aria-label="Voorbeeld bouwwerk">
+          … SVG / emoji illustration …
+        </div>
+        <h2 class="build-select__name">Auto</h2>
+        <p  class="build-select__theme">&#128663; Voertuigen</p>
+        <div class="build-select__meta">
+          <span class="build-select__difficulty" data-difficulty>&#11088;&#11088;&#10025;</span>
+          <span class="build-select__blocks-needed">
+            &#129521; <span data-blocks-needed>8</span> blokken nodig
+          </span>
+        </div>
+        <div class="build-select__progress-wrap" aria-label="Bouwvoortgang">
+          <div class="build-select__progress-bar"
+               role="progressbar"
+               data-build-progress
+               aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"
+               style="--progress: 0%"></div>
+        </div>
+        <p class="build-select__progress-label" data-build-progress-label>
+          0 / 8 blokken geplaatst
+        </p>
+      -->
+    </div>
+
+    <!-- Shown when build is locked -->
+    <div class="build-select__locked" data-build-locked hidden aria-live="polite">
+      <span class="build-select__lock-icon" aria-hidden="true">&#128274;</span>
+      <p class="build-select__lock-msg">
+        Verdien nog <strong data-stars-needed>0</strong> sterren om dit te openen!
+      </p>
+      <button class="btn btn--cta" data-nav="screen-operation"
+              aria-label="Ga rekenen om sterren te verdienen">
+        &#128290; Ga rekenen!
+      </button>
+    </div>
+
+    <!-- Shown when build is available -->
+    <div class="build-select__actions" data-build-actions>
+      <button class="btn btn--cta build-select__start-btn"
+              data-action="start-build"
+              aria-label="Begin bouwen">
+        &#127959;&#65039; Bouwen!
+      </button>
+      <button class="btn btn--secondary build-select__math-btn"
+              data-nav="screen-operation"
+              aria-label="Meer blokken verdienen">
+        &#128290; Meer blokken verdienen
+      </button>
     </div>
   </section>
 
   <!-- ======================================================================
-       Screen: Exercise (active question)
-       ID: screen-exercise
+       SCREEN 4 · Operation Selection
+       ID: screen-operation
+       Child picks which math operation to practice.
+       JS: renderOperationCards() populates [data-operation-grid].
        ====================================================================== -->
-  <section id="screen-exercise" class="screen exercise" aria-label="Rekenoefening"
+  <section id="screen-operation"
+           class="screen screen--operation"
+           aria-label="Kies een rekensoort"
            aria-hidden="true">
-    <progress class="exercise__progress-bar" data-progress-bar value="1" max="10"
-              aria-label="Vraag voortgang"></progress>
-    <p class="exercise__counter" data-question-counter aria-live="polite">Vraag 1 van 10</p>
 
-    <div class="exercise__problem" data-problem aria-live="assertive" role="status">
-      <!-- e.g. "4 + 7 = ?" -->
+    <button class="nav-back" data-nav="screen-worldmap" aria-label="Terug naar kaart">
+      &#8592;
+    </button>
+    <h2 class="operation-screen__title">Wat wil je oefenen?</h2>
+
+    <div class="operation-grid"
+         data-operation-grid
+         role="list"
+         aria-label="Keuze van rekensoort">
+      <!-- Rendered by JS from data.js OPERATIONS -->
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       SCREEN 5 · Math Quiz (active question)
+       ID: screen-exercise
+       One question at a time. 3 multiple-choice answer buttons.
+       JS: renderQuestion() updates [data-problem] and [data-choices].
+       ====================================================================== -->
+  <section id="screen-exercise"
+           class="screen screen--exercise"
+           aria-label="Rekenoefening"
+           aria-hidden="true">
+
+    <div class="exercise__header">
+      <progress class="exercise__progress-bar"
+                data-progress-bar
+                value="1" max="10"
+                aria-label="Voortgang in deze sessie"></progress>
+      <p class="exercise__counter"
+         data-question-counter
+         aria-live="polite">Vraag 1 van 10</p>
     </div>
 
-    <!-- Multiple-choice answer buttons (default mode) -->
-    <div class="exercise__choices" data-choices aria-label="Keuze antwoorden">
-      <!-- Rendered dynamically per question -->
+    <!-- Current streak indicator -->
+    <div class="exercise__streak"
+         data-streak-display
+         aria-live="polite"
+         aria-label="Reeks"></div>
+
+    <!-- The math problem display -->
+    <div class="exercise__problem"
+         data-problem
+         role="status"
+         aria-live="assertive"
+         aria-atomic="true">
+      <!-- e.g.:
+           <span class="problem__operand">4</span>
+           <span class="problem__operator">+</span>
+           <span class="problem__operand">7</span>
+           <span class="problem__equals">=</span>
+           <span class="problem__unknown">?</span>
+      -->
     </div>
 
-    <!-- Optional typed-input row (shown when settings prefer typing) -->
+    <!-- Optional visual / emoji representation (level 1) -->
+    <div class="exercise__visual"
+         data-problem-visual
+         aria-hidden="true"></div>
+
+    <!-- 3 multiple-choice buttons -->
+    <div class="exercise__choices"
+         data-choices
+         role="group"
+         aria-label="Kies een antwoord">
+      <!-- Rendered per question by JS -->
+    </div>
+
+    <!-- Fallback: typed input (activated via parent settings) -->
     <div class="exercise__input-row" hidden>
       <label for="answer-input" class="sr-only">Jouw antwoord</label>
-      <input id="answer-input" class="exercise__input" type="number" min="0"
-             data-answer-input inputmode="numeric" pattern="[0-9]*"
-             placeholder="?" autocomplete="off" />
-      <button class="btn" data-action="submit-answer" aria-label="Controleer antwoord">OK</button>
+      <input id="answer-input"
+             class="exercise__input"
+             type="number"
+             min="0"
+             data-answer-input
+             inputmode="numeric"
+             pattern="[0-9]*"
+             placeholder="?"
+             autocomplete="off" />
+      <button class="btn btn--primary"
+              data-action="submit-answer"
+              aria-label="Controleer antwoord">OK</button>
     </div>
 
-    <p class="exercise__feedback" data-feedback aria-live="polite" role="status"></p>
+    <!-- Inline feedback (correct / wrong / hint) -->
+    <p class="exercise__feedback"
+       data-feedback
+       role="status"
+       aria-live="polite"></p>
+
+    <!-- Earned-block flash (shown briefly after correct answer) -->
+    <div class="exercise__block-earned"
+         data-block-earned
+         aria-live="polite"
+         aria-atomic="true"
+         hidden></div>
   </section>
 
   <!-- ======================================================================
-       Screen: Session result
+       SCREEN 6 · Session Result
        ID: screen-result
+       Shown after a math session. Stars earned, actions.
+       JS: renderResultScreen() populates [data-result-summary].
        ====================================================================== -->
-  <section id="screen-result" class="screen result" aria-label="Resultaat" aria-hidden="true">
-    <div data-result-summary aria-live="polite">
-      <!-- Rendered by main.js → renderResultScreen() -->
+  <section id="screen-result"
+           class="screen screen--result"
+           aria-label="Sessie resultaat"
+           aria-hidden="true">
+
+    <div class="result__celebration" aria-hidden="true">
+      <span class="result__trophy">&#127942;</span>
+    </div>
+
+    <div class="result__summary"
+         data-result-summary
+         aria-live="polite"
+         aria-atomic="true">
+      <!--
+        <h2 class="result__heading">Super gedaan! &#127881;</h2>
+        <p class="result__score">8 van de 10 goed</p>
+        <p class="result__stars-earned">+4 &#11088; sterren verdiend!</p>
+        <div class="result__badges" data-result-badges>…</div>
+      -->
     </div>
 
     <div class="result__actions">
-      <button class="btn btn--secondary" data-nav="screen-operation">
-        Nog een keer
+      <button class="btn btn--cta"
+              data-nav="screen-worldmap"
+              aria-label="Terug naar de kaart">
+        &#127758; Naar de kaart
       </button>
-      <button class="btn btn--ghost" data-nav="screen-builds">
-        🏗️ Ga bouwen
-      </button>
-      <button class="btn btn--ghost" data-nav="screen-home">
-        🏠 Naar huis
+      <button class="btn btn--secondary"
+              data-nav="screen-operation"
+              aria-label="Nog een ronde">
+        &#128290; Nog een keer
       </button>
     </div>
   </section>
 
   <!-- ======================================================================
-       Screen: Builds / Workshop
+       SCREEN 7 · Building Workshop
        ID: screen-builds
+       Drag-and-drop canvas. Child places earned blocks onto the build.
+       JS: renderBuildsScreen() + initDragDrop() operate on this screen.
        ====================================================================== -->
-  <section id="screen-builds" class="screen builds" aria-label="Bouwplaats" aria-hidden="true">
-    <button class="nav-back" data-nav="screen-home">← Terug</button>
-    <h2>🏗️ Bouwplaats</h2>
+  <section id="screen-builds"
+           class="screen screen--builds"
+           aria-label="Bouwplaats"
+           aria-hidden="true">
 
-    <!-- Build project selector -->
-    <div class="build-tabs" data-build-tabs role="tablist" aria-label="Bouwprojecten">
-      <!-- Rendered by main.js → renderBuildsScreen() -->
+    <header class="builds__topbar">
+      <button class="nav-back"
+              data-nav="screen-build-select"
+              aria-label="Terug naar projectkeuze">
+        &#8592;
+      </button>
+      <h2 class="builds__title" data-active-build-title>Bouwen</h2>
+      <div class="builds__progress-wrap" aria-label="Bouwvoortgang">
+        <progress class="builds__progress-bar"
+                  data-build-progress-bar
+                  value="0" max="100"
+                  aria-label="Bouwvoortgang"></progress>
+        <span class="builds__progress-label"
+              data-build-progress-label
+              aria-live="polite">0 / 0</span>
+      </div>
+    </header>
+
+    <!-- Build project tabs (for switching between active builds) -->
+    <div class="build-tabs"
+         data-build-tabs
+         role="tablist"
+         aria-label="Actieve bouwprojecten">
+      <!-- Rendered by JS -->
     </div>
 
+    <!-- Two-column layout: palette ← → canvas -->
     <div class="builds__layout">
-      <!-- Left: draggable parts palette -->
-      <aside>
-        <p><strong>Bouwstukken</strong></p>
-        <div class="build-palette" data-build-palette aria-label="Beschikbare bouwstukken">
-          <!-- Rendered dynamically -->
+
+      <aside class="builds__palette-col" aria-label="Beschikbare bouwstukken">
+        <p class="builds__col-heading">
+          &#129521; Blokken
+          <span class="builds__blocks-available"
+                data-blocks-available
+                aria-live="polite">0</span>
+        </p>
+        <div class="build-palette"
+             data-build-palette
+             aria-label="Sleep bouwstukken naar het bouwveld">
+          <!-- Rendered by JS -->
         </div>
       </aside>
 
-      <!-- Right: drop slots canvas -->
-      <main>
-        <p><strong>Jouw bouwwerk</strong></p>
-        <div class="build-canvas" data-build-canvas aria-label="Bouwveld">
-          <!-- Rendered dynamically -->
+      <main class="builds__canvas-col" aria-label="Bouwveld">
+        <p class="builds__col-heading">&#127959;&#65039; Jouw bouwwerk</p>
+        <div class="build-canvas"
+             data-build-canvas
+             aria-label="Bouwveld: sleep stukken hierheen"
+             aria-dropeffect="copy">
+          <!-- Drop slots rendered by JS -->
         </div>
       </main>
     </div>
+
+    <!-- Shown when all parts are placed -->
+    <div class="builds__complete-overlay"
+         data-build-complete-overlay
+         hidden
+         role="status"
+         aria-live="assertive">
+      <span class="builds__complete-icon" aria-hidden="true">&#127881;</span>
+      <p class="builds__complete-msg">Klaar! Super bouwen!</p>
+    </div>
   </section>
 
   <!-- ======================================================================
-       Screen: Progress overview
+       SCREEN 8 · Progress and Achievements
        ID: screen-progress
+       Stats, badges, completed builds, session history.
+       JS: renderProgressScreen(container) populates [data-progress-content].
        ====================================================================== -->
-  <section id="screen-progress" class="screen" aria-label="Voortgang" aria-hidden="true">
-    <button class="nav-back" data-nav="screen-home">← Terug</button>
-    <div class="progress__content">
-      <!-- Rendered by progress.js → renderProgressScreen() -->
+  <section id="screen-progress"
+           class="screen screen--progress"
+           aria-label="Voortgang en prestaties"
+           aria-hidden="true">
+
+    <button class="nav-back" data-nav="screen-worldmap" aria-label="Terug naar kaart">
+      &#8592;
+    </button>
+    <h2 class="progress__heading">&#127942; Mijn prestaties</h2>
+
+    <div class="progress__content"
+         data-progress-content
+         aria-live="polite">
+      <!--
+        Rendered by progress.js → renderProgressScreen():
+
+        <div class="progress__stats">
+          <div class="stat-card">
+            <span class="stat-card__value" data-stat-total-correct>0</span>
+            <span class="stat-card__label">Goed beantwoord</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__value" data-stat-best-streak>0</span>
+            <span class="stat-card__label">Beste reeks &#128293;</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__value" data-stat-stars>0</span>
+            <span class="stat-card__label">Sterren &#11088;</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-card__value" data-stat-builds-done>0</span>
+            <span class="stat-card__label">Bouwwerken &#127959;&#65039;</span>
+          </div>
+        </div>
+
+        <h3 class="progress__section-heading">Mijn badges</h3>
+        <div class="progress__badges" data-badge-list>…</div>
+
+        <h3 class="progress__section-heading">Voltooide bouwwerken</h3>
+        <div class="progress__builds-done" data-completed-builds>…</div>
+
+        <h3 class="progress__section-heading">Gespeelde sessies</h3>
+        <ol class="progress__history" data-session-history>…</ol>
+      -->
     </div>
   </section>
 
   <!-- ======================================================================
-       Screen: Parent PIN entry
+       SCREEN 9 · Parent PIN Entry
        ID: screen-parent
+       4-digit PIN gate before showing settings.
+       JS: initPinScreen() in parent-settings.js.
        ====================================================================== -->
-  <section id="screen-parent" class="screen parent-pin" aria-label="Ouderzone invoer"
+  <section id="screen-parent"
+           class="screen screen--parent-pin"
+           aria-label="Ouderzone – pincode invoer"
            aria-hidden="true">
-    <button class="nav-back" data-nav="screen-home">← Terug</button>
-    <h2 class="parent-pin__title">🔒 Ouderzone</h2>
-    <p>Voer de 4-cijferige pincode in</p>
 
-    <div class="pin-display" data-pin-display aria-label="Ingevoerde pincode" aria-live="polite">
-      ○○○○
+    <button class="nav-back" data-nav="screen-worldmap" aria-label="Terug naar kaart">
+      &#8592;
+    </button>
+
+    <div class="parent-pin__card">
+      <h2 class="parent-pin__title">&#128274; Ouderzone</h2>
+      <p class="parent-pin__instructions">Voer de 4-cijferige pincode in</p>
+
+      <!-- PIN dot indicators -->
+      <div class="pin-display"
+           data-pin-display
+           aria-label="Ingevoerde pincode"
+           aria-live="polite">
+        <span class="pin-dot" data-pin-dot></span>
+        <span class="pin-dot" data-pin-dot></span>
+        <span class="pin-dot" data-pin-dot></span>
+        <span class="pin-dot" data-pin-dot></span>
+      </div>
+
+      <!-- Numeric keypad -->
+      <div class="pin-keypad"
+           data-pin-keypad
+           role="group"
+           aria-label="Cijfertoetsenbord">
+        <button class="pin-key" data-key="1" aria-label="1">1</button>
+        <button class="pin-key" data-key="2" aria-label="2">2</button>
+        <button class="pin-key" data-key="3" aria-label="3">3</button>
+        <button class="pin-key" data-key="4" aria-label="4">4</button>
+        <button class="pin-key" data-key="5" aria-label="5">5</button>
+        <button class="pin-key" data-key="6" aria-label="6">6</button>
+        <button class="pin-key" data-key="7" aria-label="7">7</button>
+        <button class="pin-key" data-key="8" aria-label="8">8</button>
+        <button class="pin-key" data-key="9" aria-label="9">9</button>
+        <button class="pin-key pin-key--wide" data-key="del" aria-label="Wissen">&#9003;</button>
+        <button class="pin-key" data-key="0" aria-label="0">0</button>
+        <button class="pin-key pin-key--ok" data-key="ok" aria-label="Bevestigen">OK</button>
+      </div>
+
+      <p class="pin-error"
+         data-pin-error
+         role="alert"
+         aria-live="assertive"></p>
     </div>
-
-    <div class="pin-keypad" data-pin-keypad role="group" aria-label="Cijfertoetsenbord">
-      <button class="pin-key" data-key="1" aria-label="1">1</button>
-      <button class="pin-key" data-key="2" aria-label="2">2</button>
-      <button class="pin-key" data-key="3" aria-label="3">3</button>
-      <button class="pin-key" data-key="4" aria-label="4">4</button>
-      <button class="pin-key" data-key="5" aria-label="5">5</button>
-      <button class="pin-key" data-key="6" aria-label="6">6</button>
-      <button class="pin-key" data-key="7" aria-label="7">7</button>
-      <button class="pin-key" data-key="8" aria-label="8">8</button>
-      <button class="pin-key" data-key="9" aria-label="9">9</button>
-      <button class="pin-key pin-key--wide" data-key="del" aria-label="Wissen">⌫</button>
-      <button class="pin-key" data-key="0" aria-label="0">0</button>
-      <button class="pin-key pin-key--ok" data-key="ok" aria-label="Bevestigen">OK</button>
-    </div>
-
-    <p class="pin-error" data-pin-error role="alert" aria-live="assertive"></p>
   </section>
 
   <!-- ======================================================================
-       Screen: Parent settings panel (after PIN)
+       SCREEN 10 · Parent Settings Panel (behind PIN)
        ID: screen-parent-panel
+       All parent-configurable options.
+       JS: initParentPanel() + renderParentPanel() in parent-settings.js.
        ====================================================================== -->
-  <section id="screen-parent-panel" class="screen parent-panel" aria-label="Ouderinstellingen"
+  <section id="screen-parent-panel"
+           class="screen screen--parent-panel"
+           aria-label="Ouderinstellingen"
            aria-hidden="true">
-    <button class="nav-back" data-nav="screen-home">← Terug naar huis</button>
-    <h2 class="parent-panel__title">⚙️ Instellingen</h2>
 
-    <div data-settings-content>
-      <!-- Rendered by main.js → renderParentPanel() -->
+    <button class="nav-back" data-nav="screen-worldmap" aria-label="Terug naar kaart">
+      &#8592; Terug
+    </button>
+    <h2 class="parent-panel__title">&#9881;&#65039; Instellingen</h2>
+
+    <div class="parent-panel__body" data-settings-content>
+      <!--
+        Rendered by parent-settings.js → renderParentPanel():
+
+        <section class="settings-group">
+          <h3 class="settings-group__heading">Niveau</h3>
+          <label>Rekenniveau
+            <select data-setting="level">
+              <option value="1">Level 1 – tot 10</option>
+              <option value="2">Level 2 – tot 20</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="settings-group">
+          <h3 class="settings-group__heading">Geluid</h3>
+          <label class="toggle">
+            <input type="checkbox" data-setting="soundEnabled" />
+            <span class="toggle__track"></span>
+            Geluid aan
+          </label>
+        </section>
+
+        <section class="settings-group">
+          <h3 class="settings-group__heading">Voortgang</h3>
+          <div data-parent-progress-summary>…</div>
+          <button class="btn btn--danger" data-action="reset-progress">
+            &#128465;&#65039; Voortgang wissen
+          </button>
+        </section>
+
+        <section class="settings-group">
+          <h3 class="settings-group__heading">Pincode wijzigen</h3>
+          <button class="btn btn--secondary" data-action="change-pin">
+            &#128273; Pincode wijzigen
+          </button>
+        </section>
+      -->
     </div>
   </section>
 
   <!-- ======================================================================
-       Entry point script (ES module)
+       OVERLAY · Reward Modal
+       ID: reward-modal
+       Appears on top of any screen for milestones: streak bonus, build
+       complete, badge earned, sticker reward.
+       JS: showRewardModal(config) / hideRewardModal() toggle aria-hidden
+       and the `hidden` attribute on this element.
+       ====================================================================== -->
+  <div id="reward-modal"
+       class="reward-modal"
+       data-reward-modal
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="reward-modal-heading"
+       aria-hidden="true"
+       hidden>
+
+    <!-- Particle / confetti layer (drawn on canvas by JS) -->
+    <canvas class="reward-modal__confetti"
+            data-confetti-canvas
+            aria-hidden="true"></canvas>
+
+    <div class="reward-modal__card">
+      <div class="reward-modal__icon"
+           data-reward-icon
+           aria-hidden="true">&#127881;</div>
+
+      <h2 class="reward-modal__heading"
+          id="reward-modal-heading"
+          data-reward-heading>Super!</h2>
+
+      <p class="reward-modal__message"
+         data-reward-message></p>
+
+      <!-- Earned items row: stars, blocks, stickers -->
+      <div class="reward-modal__earned"
+           data-reward-earned
+           aria-label="Verdiende beloningen">
+        <!-- e.g. <span class="reward-chip">+2 &#11088;</span> -->
+      </div>
+
+      <button class="btn btn--cta reward-modal__close-btn"
+              data-reward-close
+              aria-label="Doorgaan">
+        Doorgaan! &#128640;
+      </button>
+    </div>
+  </div>
+
+  <!-- Live region for screen-reader announcements -->
+  <div id="live-region"
+       class="sr-only"
+       role="status"
+       aria-live="polite"
+       aria-atomic="true"></div>
+
+  <!-- ======================================================================
+       Entry point (ES module)
+       NOTE: add 'screen-worldmap' and 'screen-build-select' to the SCREENS
+       array in navigation.js so navigateTo() can route to them.
        ====================================================================== -->
   <script type="module" src="scripts/main.js"></script>
 </body>
