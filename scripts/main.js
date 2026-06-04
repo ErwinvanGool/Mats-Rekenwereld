@@ -595,6 +595,13 @@ function _renderLegoPalette(paletteEl, build) {
       );
     });
   });
+
+  // Pulse the first available (unlocked, unplaced) chip to guide the child's eye.
+  const firstAvailable = paletteEl.querySelector('.lego-chip--available');
+  if (firstAvailable) {
+    firstAvailable.classList.add('lego-chip--pulse');
+    setTimeout(() => firstAvailable.classList.remove('lego-chip--pulse'), 3000);
+  }
 }
 
 /** Handle a brick-placement event dispatched by lego-canvas.js.
@@ -641,6 +648,7 @@ function onPartDropped({ detail: { partId, slotId } }) {
     correctSlot?.classList.add('build-slot--hint');
     setTimeout(() => correctSlot?.classList.remove('build-slot--hint'), 1400);
     showBuildFeedback('🤔 Bijna! Zoek het goede plekje!', false);
+    playWrongSound();
     return;
   }
 
