@@ -2,7 +2,8 @@
  * state.js
  * Single-source-of-truth for runtime application state.
  *
- * Do NOT import this into data.js or storage.js (would create a cycle).
+ * Do NOT import this into data.js (would create a cycle).
+ * storage.js imports state.js (not the other way around), so that is safe.
  * All other modules read/write state through the exported `state` object
  * or the helper functions below.
  */

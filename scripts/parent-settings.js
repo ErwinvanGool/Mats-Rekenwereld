@@ -6,7 +6,7 @@
 import { state } from './state.js';
 import { saveState, clearState } from './storage.js';
 import { navigateTo } from './navigation.js';
-import { OPERATIONS } from './data.js';
+import { OPERATIONS, BUILDS } from './data.js';
 
 // ---------------------------------------------------------------------------
 // PIN handling
@@ -112,7 +112,7 @@ export function resetProgress() {
   state.builds = {
     placedParts: [],
     completedBuilds: [],
-    activeBuildId: 'rocket',
+    activeBuildId: BUILDS[0].id,
   };
   saveState();
 }

@@ -705,8 +705,6 @@ button:active { transform: scale(0.96); }
     grid-template-columns: 1fr;
   }
 
-  .exercise__choices { grid-template-columns: 1fr 1fr; }
-
   .build-canvas { grid-template-columns: repeat(2, 1fr); }
 
   .progress__stats { grid-template-columns: 1fr 1fr; }
