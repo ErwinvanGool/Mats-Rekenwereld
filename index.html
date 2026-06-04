@@ -291,22 +291,7 @@
       <!-- Rendered per question by JS -->
     </div>
 
-    <!-- Fallback: typed input (activated via parent settings) -->
-    <div class="exercise__input-row" hidden>
-      <label for="answer-input" class="sr-only">Jouw antwoord</label>
-      <input id="answer-input"
-             class="exercise__input"
-             type="number"
-             min="0"
-             data-answer-input
-             inputmode="numeric"
-             pattern="[0-9]*"
-             placeholder="?"
-             autocomplete="off" />
-      <button class="btn btn--primary"
-              data-action="submit-answer"
-              aria-label="Controleer antwoord">OK</button>
-    </div>
+
 
     <!-- Inline feedback (correct / wrong / hint) -->
     <p class="exercise__feedback"
