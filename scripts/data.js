@@ -67,7 +67,12 @@ export const BUILDS = [
     label: 'Auto',
     emoji: '🚗',
     thumbnail: 'assets/images/car_thumb.png',
-    blocksRequired: 0,
+    difficulty: 'easy',
+    blocksRequired: 0,               // earnedBlocks threshold to appear on world map
+    unlockCondition: null,           // always unlocked – starter build
+    blocksToComplete: 6,             // earnedBlocks needed to place every part
+    palette: ['#FF6B35', '#444444', '#87CEEB'],
+    rewards: { stickers: 1, bonusBlocks: 5,  badge: 'Autorijder! 🚗'    },
     theme: 'voertuig',
     completionBadge: 'Autorijder! 🚗',
     referenceSvg: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
@@ -94,7 +99,12 @@ export const BUILDS = [
     label: 'Huis',
     emoji: '🏠',
     thumbnail: 'assets/images/house_thumb.png',
-    blocksRequired: 10,
+    difficulty: 'easy',
+    blocksRequired: 10,              // earnedBlocks threshold to appear on world map
+    unlockCondition: { earnedBlocks: 10 },
+    blocksToComplete: 17,            // earnedBlocks needed to place every part
+    palette: ['#FBBF24', '#EF4444', '#92400E', '#87CEEB'],
+    rewards: { stickers: 1, bonusBlocks: 8,  badge: 'Bouwmeester! 🏠'   },
     theme: 'gebouw',
     completionBadge: 'Bouwmeester! 🏠',
     referenceSvg: `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
@@ -120,7 +130,12 @@ export const BUILDS = [
     label: 'Dinosaurus',
     emoji: '🦕',
     thumbnail: 'assets/images/dinosaur_thumb.png',
-    blocksRequired: 25,
+    difficulty: 'medium',
+    blocksRequired: 25,              // earnedBlocks threshold to appear on world map
+    unlockCondition: { earnedBlocks: 25 },
+    blocksToComplete: 33,            // earnedBlocks needed to place every part
+    palette: ['#4ADE80', '#22C55E', '#16A34A', '#15803D'],
+    rewards: { stickers: 2, bonusBlocks: 10, badge: 'Dinosaurusjager! 🦕' },
     theme: 'dier',
     completionBadge: 'Dinosaurusjager! 🦕',
     referenceSvg: `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
@@ -149,7 +164,12 @@ export const BUILDS = [
     label: 'Raket',
     emoji: '🚀',
     thumbnail: 'assets/images/rocket_thumb.png',
-    blocksRequired: 40,
+    difficulty: 'medium',
+    blocksRequired: 40,              // earnedBlocks threshold to appear on world map
+    unlockCondition: { earnedBlocks: 40 },
+    blocksToComplete: 50,            // earnedBlocks needed to place every part
+    palette: ['#60A5FA', '#BFDBFE', '#2563EB', '#FCD34D', '#F97316'],
+    rewards: { stickers: 2, bonusBlocks: 12, badge: 'Ruimtevaarder! 🚀'  },
     theme: 'ruimte',
     completionBadge: 'Ruimtevaarder! 🚀',
     referenceSvg: `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
@@ -176,7 +196,12 @@ export const BUILDS = [
     label: 'Brandweerauto',
     emoji: '🚒',
     thumbnail: 'assets/images/firetruck_thumb.png',
-    blocksRequired: 60,
+    difficulty: 'hard',
+    blocksRequired: 60,              // earnedBlocks threshold to appear on world map
+    unlockCondition: { earnedBlocks: 60 },
+    blocksToComplete: 69,            // earnedBlocks needed to place every part
+    palette: ['#EF4444', '#D1D5DB', '#F59E0B', '#1F2937', '#FCD34D'],
+    rewards: { stickers: 3, bonusBlocks: 15, badge: 'Brandweerheld! 🚒'  },
     theme: 'voertuig',
     completionBadge: 'Brandweerheld! 🚒',
     referenceSvg: `<svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg">
