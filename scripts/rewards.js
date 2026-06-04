@@ -1,47 +1,92 @@
 /**
  * rewards.js
- * Star accounting and badge (achievement) logic.
+ * Block earning, streak tracking, sticker awards, and badge logic.
+ *
+ * Economy:
+ *   - Correct answers earn blocks (1 / 2 / 3 depending on difficulty).
+ *   - Every STREAK_BONUS_THRESHOLD correct answers in a row adds bonus blocks.
+ *   - Every STICKER_STREAK_THRESHOLD correct answers in a row earns a sticker.
+ *   - Blocks are the currency used to unlock build parts.
+ *   - Stickers are collectible rewards shown in the progress screen.
  */
 
-import { BADGES, STARS_PER_CORRECT, BONUS_STARS_PERFECT_SESSION } from './data.js';
+import {
+  BADGES,
+  BLOCKS_PER_DIFFICULTY,
+  STREAK_BONUS_THRESHOLD,
+  STREAK_BONUS_BLOCKS,
+  STICKER_STREAK_THRESHOLD,
+} from './data.js';
 import { state } from './state.js';
 import { saveState } from './storage.js';
 
 // ---------------------------------------------------------------------------
-// Stars
+// Block earning — called once per correct answer
 // ---------------------------------------------------------------------------
 
 /**
- * Award stars at the end of a session and persist the change.
+ * Award blocks for a single correct answer.
+ * Applies streak bonuses and sticker milestones automatically.
  *
- * @param {number} correctCount  – number of correct answers in the session
- * @param {number} totalCount    – total questions in the session
- * @returns {number} stars awarded this session
+ * @param {string} difficulty  – 'easy' | 'medium' | 'hard' (from the question)
+ * @returns {{
+ *   baseBlocks:   number,   blocks earned from the answer itself
+ *   bonusBlocks:  number,   extra blocks from streak milestone
+ *   stickerEarned: boolean, true if a streak sticker was just awarded
+ *   totalBlocks:  number    sum of base + bonus
+ * }}
  */
-export function awardSessionStars(correctCount, totalCount) {
-  const base = correctCount * STARS_PER_CORRECT;
-  const bonus = correctCount === totalCount ? BONUS_STARS_PERFECT_SESSION : 0;
-  const total = base + bonus;
+export function earnBlocksForAnswer(difficulty) {
+  const { progress } = state;
+  const baseBlocks  = BLOCKS_PER_DIFFICULTY[difficulty] ?? 1;
+  const streak      = progress.currentStreak; // already updated by progress.recordAnswer
 
-  state.progress.earnedStars += total;
-  state.session.starsEarned = total;
+  // Streak bonus: extra block every STREAK_BONUS_THRESHOLD correct in a row.
+  const bonusBlocks =
+    streak > 0 && streak % STREAK_BONUS_THRESHOLD === 0
+      ? STREAK_BONUS_BLOCKS
+      : 0;
+
+  // Sticker award: one sticker every STICKER_STREAK_THRESHOLD correct in a row.
+  const stickerEarned =
+    streak > 0 && streak % STICKER_STREAK_THRESHOLD === 0;
+
+  const totalBlocks = baseBlocks + bonusBlocks;
+
+  progress.earnedBlocks += totalBlocks;
+  if (stickerEarned) progress.earnedStickers += 1;
 
   saveState();
-  return total;
+
+  return { baseBlocks, bonusBlocks, stickerEarned, totalBlocks };
 }
 
 /**
- * Spend stars (e.g. to unlock a build part).
- * Returns false if the child doesn't have enough stars.
- *
- * @param {number} amount
- * @returns {boolean}
+ * Return the total blocks earned so far (convenience getter).
+ * @returns {number}
  */
-export function spendStars(amount) {
-  if (state.progress.earnedStars < amount) return false;
-  state.progress.earnedStars -= amount;
-  saveState();
-  return true;
+export function getEarnedBlocks() {
+  return state.progress.earnedBlocks;
+}
+
+// ---------------------------------------------------------------------------
+// Session summary — called at the end of a session
+// ---------------------------------------------------------------------------
+
+/**
+ * Tally blocks earned across an entire session's answers.
+ * This is used on the result screen to show a "blocks this session" count.
+ * Individual block credits already happened inside earnBlocksForAnswer,
+ * so this is read-only tallying.
+ *
+ * @param {{ question: MathQuestion, correct: boolean }[]} answers
+ * @returns {number} total blocks earned in this session
+ */
+export function sessionBlockTotal(answers) {
+  return answers.reduce((sum, { question, correct }) => {
+    if (!correct) return sum;
+    return sum + (BLOCKS_PER_DIFFICULTY[question.difficulty] ?? 1);
+  }, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -49,8 +94,8 @@ export function spendStars(amount) {
 // ---------------------------------------------------------------------------
 
 /**
- * Evaluate all badge conditions and award any not yet earned.
- * Call this after every session and after every build placement.
+ * Evaluate all badge conditions and award any newly met ones.
+ * Call after every answered question and after every build completion.
  *
  * @returns {Badge[]} newly earned badges (empty array if none)
  */
@@ -60,7 +105,6 @@ export function evaluateBadges() {
 
   for (const badge of BADGES) {
     if (progress.earnedBadges.includes(badge.id)) continue;
-
     if (isBadgeUnlocked(badge, progress, builds)) {
       progress.earnedBadges.push(badge.id);
       newBadges.push(badge);
@@ -72,28 +116,17 @@ export function evaluateBadges() {
 }
 
 /**
- * Check a single badge's condition against the current state.
- * @param {Badge} badge
- * @param {ProgressState} progress
- * @param {BuildsState} builds
+ * @param {object} badge
+ * @param {object} progress
+ * @param {object} builds
  * @returns {boolean}
  */
 function isBadgeUnlocked(badge, progress, builds) {
   const c = badge.condition;
-
-  if (c.totalCorrect !== undefined && progress.totalCorrect < c.totalCorrect) {
-    return false;
-  }
-  if (c.streak !== undefined && progress.bestStreak < c.streak) {
-    return false;
-  }
-  if (c.allOperations && progress.triedOperations.length < 4) {
-    return false;
-  }
-  if (c.completedBuilds !== undefined && builds.completedBuilds.length < c.completedBuilds) {
-    return false;
-  }
-
+  if (c.totalCorrect    !== undefined && progress.totalCorrect              < c.totalCorrect)    return false;
+  if (c.streak          !== undefined && progress.bestStreak                < c.streak)          return false;
+  if (c.earnedStickers  !== undefined && progress.earnedStickers            < c.earnedStickers)  return false;
+  if (c.completedBuilds !== undefined && builds.completedBuilds.length      < c.completedBuilds) return false;
   return true;
 }
 
@@ -102,23 +135,30 @@ function isBadgeUnlocked(badge, progress, builds) {
 // ---------------------------------------------------------------------------
 
 /**
- * Render a star display string (e.g. "⭐ 42").
+ * Returns a display string for the block count, e.g. "🧱 42".
  * @returns {string}
  */
-export function starDisplayText() {
-  return `⭐ ${state.progress.earnedStars}`;
+export function blockDisplayText() {
+  return `\ud83e\uddf1 ${state.progress.earnedBlocks}`;
 }
 
 /**
- * Render the list of earned badges as HTML list items.
- * @returns {string} HTML string
+ * Returns a display string for the sticker count, e.g. "🌟 3".
+ * @returns {string}
+ */
+export function stickerDisplayText() {
+  return `\ud83c\udf1f ${state.progress.earnedStickers}`;
+}
+
+/**
+ * Renders the list of earned badges as an HTML string of <li> elements.
+ * @returns {string}
  */
 export function badgeListHtml() {
   const earned = state.progress.earnedBadges;
   if (earned.length === 0) {
     return '<li class="badge-list__empty">Nog geen badges verdiend.</li>';
   }
-
   return BADGES
     .filter((b) => earned.includes(b.id))
     .map(

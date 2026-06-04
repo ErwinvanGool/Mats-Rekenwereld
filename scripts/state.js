@@ -8,7 +8,7 @@
  * or the helper functions below.
  */
 
-import { OPERATIONS, BUILDS, QUESTIONS_PER_SESSION } from './data.js';
+import { OPERATIONS, BUILDS } from './data.js';
 
 // ---------------------------------------------------------------------------
 // Default (blank-slate) state shapes
@@ -21,7 +21,10 @@ function defaultProgress() {
     totalAttempts: 0,
     currentStreak: 0,
     bestStreak: 0,
-    earnedStars: 0,
+    /** Blocks earned from correct answers — the main build currency. */
+    earnedBlocks: 0,
+    /** Stickers earned from streak milestones. */
+    earnedStickers: 0,
     /** @type {SessionRecord[]} */
     history: [],
     /** @type {string[]} badge IDs */
@@ -39,7 +42,7 @@ function defaultBuilds() {
     /** Build IDs that are fully assembled */
     completedBuilds: [],
     /** The build currently open in the workshop */
-    activeBuildId: BUILDS[0].id,
+    activeBuildId: 'car',
   };
 }
 

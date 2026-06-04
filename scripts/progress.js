@@ -74,8 +74,12 @@ export function renderProgressScreen(container) {
 
     <div class="progress__stats">
       <div class="progress__stat">
-        <span class="progress__stat-value">${progress.earnedStars}</span>
-        <span class="progress__stat-label">⭐ Sterren</span>
+        <span class="progress__stat-value">${progress.earnedBlocks}</span>
+        <span class="progress__stat-label">🧱 Blokken</span>
+      </div>
+      <div class="progress__stat">
+        <span class="progress__stat-value">${progress.earnedStickers}</span>
+        <span class="progress__stat-label">🌟 Stickers</span>
       </div>
       <div class="progress__stat">
         <span class="progress__stat-value">${progress.totalCorrect}</span>
@@ -120,7 +124,7 @@ function renderHistoryTable(history) {
         <td>${formatDate(s.date)}</td>
         <td>${OPERATIONS[s.operationId]?.label ?? s.operationId}</td>
         <td>${s.correct}/${s.total}</td>
-        <td>${s.starsEarned} ⭐</td>
+        <td>${s.blocksEarned ?? 0} 🧱</td>
       </tr>`
     )
     .join('');
@@ -129,7 +133,7 @@ function renderHistoryTable(history) {
     <table class="progress__table">
       <thead>
         <tr>
-          <th>Datum</th><th>Oefening</th><th>Score</th><th>Sterren</th>
+          <th>Datum</th><th>Oefening</th><th>Score</th><th>Blokken</th>
         </tr>
       </thead>
       <tbody>${rows}</tbody>

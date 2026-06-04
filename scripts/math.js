@@ -18,26 +18,26 @@ import { state } from './state.js';
  * @returns {MathQuestion}
  */
 export function generateQuestion(operationId, levelConfig) {
-  const { maxA, maxB } = levelConfig;
+  const { maxA, maxB, difficulty = 'easy' } = levelConfig;
 
   switch (operationId) {
     case 'addition': {
       const a = randomInt(0, maxA);
       const b = randomInt(0, maxB);
-      return { operationId, a, b, answer: a + b, display: `${a} + ${b}` };
+      return { operationId, a, b, answer: a + b, display: `${a} + ${b}`, difficulty };
     }
 
     case 'subtraction': {
       // Ensure result is never negative for children
       const b = randomInt(0, maxB);
       const a = randomInt(b, maxA);
-      return { operationId, a, b, answer: a - b, display: `${a} − ${b}` };
+      return { operationId, a, b, answer: a - b, display: `${a} − ${b}`, difficulty };
     }
 
     case 'multiplication': {
       const a = randomInt(1, maxA);
       const b = randomInt(1, maxB);
-      return { operationId, a, b, answer: a * b, display: `${a} × ${b}` };
+      return { operationId, a, b, answer: a * b, display: `${a} × ${b}`, difficulty };
     }
 
     case 'division': {
@@ -45,7 +45,7 @@ export function generateQuestion(operationId, levelConfig) {
       const b = randomInt(1, maxB);
       const quotient = randomInt(1, Math.floor(maxA / b));
       const a = b * quotient;
-      return { operationId, a, b, answer: quotient, display: `${a} ÷ ${b}` };
+      return { operationId, a, b, answer: quotient, display: `${a} ÷ ${b}`, difficulty };
     }
 
     default:

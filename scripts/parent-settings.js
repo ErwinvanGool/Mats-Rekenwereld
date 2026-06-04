@@ -104,7 +104,8 @@ export function resetProgress() {
     totalAttempts: 0,
     currentStreak: 0,
     bestStreak: 0,
-    earnedStars: 0,
+    earnedBlocks: 0,
+    earnedStickers: 0,
     history: [],
     earnedBadges: [],
     triedOperations: [],
@@ -112,7 +113,7 @@ export function resetProgress() {
   state.builds = {
     placedParts: [],
     completedBuilds: [],
-    activeBuildId: BUILDS[0].id,
+    activeBuildId: 'car',
   };
   saveState();
 }

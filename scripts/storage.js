@@ -19,7 +19,7 @@
 import { getPersistedState, hydrateState } from './state.js';
 
 const STORAGE_KEY = 'mats_rekenwereld';
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -85,6 +85,21 @@ function migrate(saved) {
   // v0 → v1: first release, no migration needed
   if (!data.version || data.version < 1) {
     data.version = 1;
+  }
+
+  // v1 → v2: renamed earnedStars → earnedBlocks, added earnedStickers
+  if (data.version < 2) {
+    if (data.progress) {
+      if (data.progress.earnedStars !== undefined && data.progress.earnedBlocks === undefined) {
+        data.progress.earnedBlocks = data.progress.earnedStars;
+        delete data.progress.earnedStars;
+      }
+      data.progress.earnedStickers = data.progress.earnedStickers ?? 0;
+    }
+    // Migrate build part unlock thresholds (starsToUnlock is now blocksToUnlock,
+    // but since builds are static in data.js the field rename only affects saved
+    // unlock checks — no stored field needs changing here).
+    data.version = 2;
   }
 
   return data;

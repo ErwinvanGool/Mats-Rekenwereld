@@ -20,11 +20,11 @@ export function getActiveBuild() {
 }
 
 /**
- * Return all builds that are available (starsRequired met).
+ * Return all builds that are available (blocksRequired met).
  * @returns {Build[]}
  */
 export function getAvailableBuilds() {
-  return BUILDS.filter((b) => state.progress.earnedStars >= b.starsRequired);
+  return BUILDS.filter((b) => state.progress.earnedBlocks >= b.blocksRequired);
 }
 
 /**
@@ -37,12 +37,12 @@ export function isPartPlaced(partId) {
 }
 
 /**
- * Return true if the given part is unlocked (enough stars earned).
+ * Return true if the given part is unlocked (enough blocks earned).
  * @param {BuildPart} part
  * @returns {boolean}
  */
 export function isPartUnlocked(part) {
-  return state.progress.earnedStars >= part.starsToUnlock;
+  return state.progress.earnedBlocks >= part.blocksToUnlock;
 }
 
 /**
@@ -129,7 +129,7 @@ export function buildPaletteHtml() {
 
       const draggable = unlocked && !placed ? 'draggable="true"' : '';
       const lockIcon  = !unlocked
-        ? `<span class="build-part__lock" aria-label="Vergrendeld (${part.starsToUnlock}⭐ nodig)">🔒</span>`
+        ? `<span class="build-part__lock" aria-label="Vergrendeld (${part.blocksToUnlock}🧱 nodig)">🔒</span>`
         : '';
 
       return `<div class="${classes}" data-part-id="${part.id}" ${draggable}

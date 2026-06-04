@@ -15,10 +15,9 @@ export const OPERATIONS = {
     label: 'Optellen',
     symbol: '+',
     levels: [
-      { id: 1, maxA: 5,  maxB: 5,  description: 'Tot 10'   },
-      { id: 2, maxA: 10, maxB: 10, description: 'Tot 20'   },
-      { id: 3, maxA: 20, maxB: 20, description: 'Tot 40'   },
-      { id: 4, maxA: 50, maxB: 50, description: 'Tot 100'  },
+      { id: 1, maxA: 5,  maxB: 5,  description: 'Tot 10',  difficulty: 'easy'   },
+      { id: 2, maxA: 10, maxB: 10, description: 'Tot 20',  difficulty: 'medium' },
+      { id: 3, maxA: 20, maxB: 20, description: 'Tot 40',  difficulty: 'hard'   },
     ],
   },
   subtraction: {
@@ -26,10 +25,9 @@ export const OPERATIONS = {
     label: 'Aftrekken',
     symbol: '−',
     levels: [
-      { id: 1, maxA: 10, maxB: 5,  description: 'Tot 10'   },
-      { id: 2, maxA: 20, maxB: 10, description: 'Tot 20'   },
-      { id: 3, maxA: 40, maxB: 20, description: 'Tot 40'   },
-      { id: 4, maxA: 100,maxB: 50, description: 'Tot 100'  },
+      { id: 1, maxA: 10, maxB: 5,  description: 'Tot 10',  difficulty: 'easy'   },
+      { id: 2, maxA: 20, maxB: 10, description: 'Tot 20',  difficulty: 'medium' },
+      { id: 3, maxA: 40, maxB: 20, description: 'Tot 40',  difficulty: 'hard'   },
     ],
   },
   multiplication: {
@@ -37,10 +35,9 @@ export const OPERATIONS = {
     label: 'Vermenigvuldigen',
     symbol: '×',
     levels: [
-      { id: 1, maxA: 5,  maxB: 2,  description: 'Tafels 1–2' },
-      { id: 2, maxA: 5,  maxB: 5,  description: 'Tafels 1–5' },
-      { id: 3, maxA: 10, maxB: 5,  description: 'Tafels 1–5×10' },
-      { id: 4, maxA: 10, maxB: 10, description: 'Tafels 1–10' },
+      { id: 1, maxA: 5,  maxB: 2,  description: 'Tafels 1–2',  difficulty: 'easy'   },
+      { id: 2, maxA: 5,  maxB: 5,  description: 'Tafels 1–5',  difficulty: 'medium' },
+      { id: 3, maxA: 10, maxB: 10, description: 'Tafels 1–10', difficulty: 'hard'   },
     ],
   },
   division: {
@@ -48,10 +45,9 @@ export const OPERATIONS = {
     label: 'Delen',
     symbol: '÷',
     levels: [
-      { id: 1, maxA: 10, maxB: 2,  description: 'Delen door 1–2' },
-      { id: 2, maxA: 25, maxB: 5,  description: 'Delen door 1–5' },
-      { id: 3, maxA: 50, maxB: 5,  description: 'Delen door 1–5' },
-      { id: 4, maxA: 100,maxB: 10, description: 'Delen door 1–10' },
+      { id: 1, maxA: 10, maxB: 2,  description: 'Delen ÷2',  difficulty: 'easy'   },
+      { id: 2, maxA: 25, maxB: 5,  description: 'Delen ÷5',  difficulty: 'medium' },
+      { id: 3, maxA: 100,maxB: 10, description: 'Delen ÷10', difficulty: 'hard'   },
     ],
   },
 };
@@ -61,51 +57,96 @@ export const OPERATIONS = {
 // ---------------------------------------------------------------------------
 
 /**
- * Each "build" is a themed construction project.
- * `parts` lists the draggable pieces that compose it.
- * A part is unlocked by earning the required number of stars.
+ * Each build is a themed construction project.
+ * Parts are unlocked by earning the required number of blocks.
+ * Builds become available once `blocksRequired` blocks have been earned.
  */
 export const BUILDS = [
   {
+    id: 'car',
+    label: 'Auto',
+    emoji: '🚗',
+    thumbnail: 'assets/images/car_thumb.png',
+    blocksRequired: 0,
+    theme: 'voertuig',
+    completionBadge: 'Autorijder!',
+    parts: [
+      { id: 'car_body',     label: 'Carrosserie',        blocksToUnlock: 0, slot: 'body'     },
+      { id: 'car_wheel_fl', label: 'Wiel voor-links',    blocksToUnlock: 2, slot: 'wheel_fl' },
+      { id: 'car_wheel_fr', label: 'Wiel voor-rechts',   blocksToUnlock: 2, slot: 'wheel_fr' },
+      { id: 'car_wheel_rl', label: 'Wiel achter-links',  blocksToUnlock: 4, slot: 'wheel_rl' },
+      { id: 'car_wheel_rr', label: 'Wiel achter-rechts', blocksToUnlock: 4, slot: 'wheel_rr' },
+      { id: 'car_window',   label: 'Raam',               blocksToUnlock: 6, slot: 'window'   },
+    ],
+  },
+  {
+    id: 'house',
+    label: 'Huis',
+    emoji: '🏠',
+    thumbnail: 'assets/images/house_thumb.png',
+    blocksRequired: 10,
+    theme: 'gebouw',
+    completionBadge: 'Bouwmeester!',
+    parts: [
+      { id: 'house_base',     label: 'Muren',        blocksToUnlock: 10, slot: 'base'     },
+      { id: 'house_roof',     label: 'Dak',          blocksToUnlock: 12, slot: 'roof'     },
+      { id: 'house_door',     label: 'Deur',         blocksToUnlock: 14, slot: 'door'     },
+      { id: 'house_window_l', label: 'Raam links',   blocksToUnlock: 15, slot: 'window_l' },
+      { id: 'house_window_r', label: 'Raam rechts',  blocksToUnlock: 15, slot: 'window_r' },
+      { id: 'house_chimney',  label: 'Schoorsteen',  blocksToUnlock: 17, slot: 'chimney'  },
+    ],
+  },
+  {
+    id: 'dinosaur',
+    label: 'Dinosaurus',
+    emoji: '🦕',
+    thumbnail: 'assets/images/dinosaur_thumb.png',
+    blocksRequired: 25,
+    theme: 'dier',
+    completionBadge: 'Dinosaurusjager!',
+    parts: [
+      { id: 'dino_body',   label: 'Lichaam',            blocksToUnlock: 25, slot: 'body'   },
+      { id: 'dino_head',   label: 'Hoofd',              blocksToUnlock: 27, slot: 'head'   },
+      { id: 'dino_tail',   label: 'Staart',             blocksToUnlock: 29, slot: 'tail'   },
+      { id: 'dino_leg_fl', label: 'Poot voor-links',    blocksToUnlock: 31, slot: 'leg_fl' },
+      { id: 'dino_leg_fr', label: 'Poot voor-rechts',   blocksToUnlock: 31, slot: 'leg_fr' },
+      { id: 'dino_spikes', label: 'Stekels',            blocksToUnlock: 33, slot: 'spikes' },
+    ],
+  },
+  {
     id: 'rocket',
     label: 'Raket',
+    emoji: '🚀',
     thumbnail: 'assets/images/rocket_thumb.png',
-    starsRequired: 0,
+    blocksRequired: 40,
+    theme: 'ruimte',
+    completionBadge: 'Ruimtevaarder!',
     parts: [
-      { id: 'rocket_body',   label: 'Raketlichaam', starsToUnlock: 0,  slot: 'body'   },
-      { id: 'rocket_nose',   label: 'Neuskegel',    starsToUnlock: 5,  slot: 'nose'   },
-      { id: 'rocket_fin_l',  label: 'Linker vin',   starsToUnlock: 10, slot: 'fin_l'  },
-      { id: 'rocket_fin_r',  label: 'Rechter vin',  starsToUnlock: 10, slot: 'fin_r'  },
-      { id: 'rocket_engine', label: 'Motor',        starsToUnlock: 15, slot: 'engine' },
-      { id: 'rocket_window', label: 'Venster',      starsToUnlock: 20, slot: 'window' },
+      { id: 'rocket_body',   label: 'Raketlichaam', blocksToUnlock: 40, slot: 'body'   },
+      { id: 'rocket_nose',   label: 'Neuskegel',    blocksToUnlock: 43, slot: 'nose'   },
+      { id: 'rocket_fin_l',  label: 'Linker vin',   blocksToUnlock: 45, slot: 'fin_l'  },
+      { id: 'rocket_fin_r',  label: 'Rechter vin',  blocksToUnlock: 45, slot: 'fin_r'  },
+      { id: 'rocket_engine', label: 'Motor',        blocksToUnlock: 47, slot: 'engine' },
+      { id: 'rocket_window', label: 'Venster',      blocksToUnlock: 50, slot: 'window' },
     ],
   },
   {
-    id: 'castle',
-    label: 'Kasteel',
-    thumbnail: 'assets/images/castle_thumb.png',
-    starsRequired: 30,
+    id: 'firetruck',
+    label: 'Brandweerauto',
+    emoji: '🚒',
+    thumbnail: 'assets/images/firetruck_thumb.png',
+    blocksRequired: 60,
+    theme: 'voertuig',
+    completionBadge: 'Brandweerheld!',
     parts: [
-      { id: 'castle_base',   label: 'Fundament',   starsToUnlock: 30, slot: 'base'    },
-      { id: 'castle_wall_l', label: 'Linker muur', starsToUnlock: 35, slot: 'wall_l'  },
-      { id: 'castle_wall_r', label: 'Rechter muur',starsToUnlock: 35, slot: 'wall_r'  },
-      { id: 'castle_tower',  label: 'Toren',       starsToUnlock: 40, slot: 'tower'   },
-      { id: 'castle_gate',   label: 'Poort',       starsToUnlock: 45, slot: 'gate'    },
-      { id: 'castle_flag',   label: 'Vlag',        starsToUnlock: 50, slot: 'flag'    },
-    ],
-  },
-  {
-    id: 'treehouse',
-    label: 'Boomhut',
-    thumbnail: 'assets/images/treehouse_thumb.png',
-    starsRequired: 60,
-    parts: [
-      { id: 'tree_trunk',    label: 'Stam',        starsToUnlock: 60, slot: 'trunk'   },
-      { id: 'tree_platform', label: 'Vloer',       starsToUnlock: 65, slot: 'platform'},
-      { id: 'tree_walls',    label: 'Wanden',      starsToUnlock: 70, slot: 'walls'   },
-      { id: 'tree_roof',     label: 'Dak',         starsToUnlock: 75, slot: 'roof'    },
-      { id: 'tree_ladder',   label: 'Ladder',      starsToUnlock: 80, slot: 'ladder'  },
-      { id: 'tree_window',   label: 'Raam',        starsToUnlock: 85, slot: 'window'  },
+      { id: 'ft_body',     label: 'Cabine',              blocksToUnlock: 60, slot: 'body'     },
+      { id: 'ft_ladder',   label: 'Ladder',              blocksToUnlock: 62, slot: 'ladder'   },
+      { id: 'ft_hose',     label: 'Slang',               blocksToUnlock: 64, slot: 'hose'     },
+      { id: 'ft_wheel_fl', label: 'Wiel voor-links',     blocksToUnlock: 65, slot: 'wheel_fl' },
+      { id: 'ft_wheel_fr', label: 'Wiel voor-rechts',    blocksToUnlock: 65, slot: 'wheel_fr' },
+      { id: 'ft_wheel_rl', label: 'Wiel achter-links',   blocksToUnlock: 67, slot: 'wheel_rl' },
+      { id: 'ft_wheel_rr', label: 'Wiel achter-rechts',  blocksToUnlock: 67, slot: 'wheel_rr' },
+      { id: 'ft_siren',    label: 'Sirene',              blocksToUnlock: 69, slot: 'siren'    },
     ],
   },
 ];
@@ -115,13 +156,17 @@ export const BUILDS = [
 // ---------------------------------------------------------------------------
 
 export const BADGES = [
-  { id: 'first_correct',   label: 'Eerste goed!',       icon: '⭐',  condition: { totalCorrect: 1    } },
-  { id: 'ten_correct',     label: '10 op een rij!',     icon: '🔥',  condition: { streak: 10         } },
-  { id: 'fifty_correct',   label: '50 goed beantwoord', icon: '🏅',  condition: { totalCorrect: 50   } },
-  { id: 'hundred_correct', label: '100 goed beantwoord',icon: '🥇',  condition: { totalCorrect: 100  } },
-  { id: 'all_operations',  label: 'Alles geprobeerd!',  icon: '🌟',  condition: { allOperations: true } },
-  { id: 'first_build',     label: 'Eerste bouw klaar!', icon: '🏗️',  condition: { completedBuilds: 1  } },
-  { id: 'all_builds',      label: 'Alles gebouwd!',     icon: '🏆',  condition: { completedBuilds: 3  } },
+  { id: 'first_correct',   label: 'Eerste goed!',        icon: '⭐', condition: { totalCorrect: 1    } },
+  { id: 'ten_correct',     label: '10 keer goed!',       icon: '🏅', condition: { totalCorrect: 10   } },
+  { id: 'fifty_correct',   label: '50 keer goed!',       icon: '🥈', condition: { totalCorrect: 50   } },
+  { id: 'hundred_correct', label: '100 keer goed!',      icon: '🥇', condition: { totalCorrect: 100  } },
+  { id: 'streak_3',        label: '3 op een rij!',       icon: '🔥', condition: { streak: 3          } },
+  { id: 'streak_5',        label: '5 op een rij!',       icon: '💥', condition: { streak: 5          } },
+  { id: 'streak_10',       label: '10 op een rij!',      icon: '🌟', condition: { streak: 10         } },
+  { id: 'first_sticker',   label: 'Eerste sticker!',     icon: '🎖️', condition: { earnedStickers: 1  } },
+  { id: 'five_stickers',   label: '5 stickers!',         icon: '🎗️', condition: { earnedStickers: 5  } },
+  { id: 'first_build',     label: 'Eerste bouw klaar!',  icon: '🏗️', condition: { completedBuilds: 1 } },
+  { id: 'all_builds',      label: 'Alles gebouwd!',      icon: '🏆', condition: { completedBuilds: 5 } },
 ];
 
 // ---------------------------------------------------------------------------
@@ -131,8 +176,17 @@ export const BADGES = [
 /** Number of math questions shown per exercise session. */
 export const QUESTIONS_PER_SESSION = 10;
 
-/** Stars awarded per correct answer. */
-export const STARS_PER_CORRECT = 1;
+/**
+ * Blocks awarded per correct answer, keyed by difficulty.
+ * Difficulty comes from the active level config of the chosen operation.
+ */
+export const BLOCKS_PER_DIFFICULTY = { easy: 1, medium: 2, hard: 3 };
 
-/** Extra stars awarded for a perfect (no-mistake) session. */
-export const BONUS_STARS_PERFECT_SESSION = 3;
+/** Bonus blocks awarded when the streak is a multiple of this number. */
+export const STREAK_BONUS_THRESHOLD = 3;
+
+/** Extra blocks per streak milestone. */
+export const STREAK_BONUS_BLOCKS = 1;
+
+/** A sticker is awarded every time the streak reaches this value. */
+export const STICKER_STREAK_THRESHOLD = 5;

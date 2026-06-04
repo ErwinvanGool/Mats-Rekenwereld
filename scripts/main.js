@@ -19,7 +19,7 @@ import { loadState, saveState }       from './storage.js';
 import { state, resetSession }        from './state.js';
 import { navigateTo, initNavigation } from './navigation.js';
 import { buildQuestionSet, checkAnswer, generateChoices } from './math.js';
-import { awardSessionStars, evaluateBadges, starDisplayText, badgeListHtml } from './rewards.js';
+import { earnBlocksForAnswer, evaluateBadges, blockDisplayText, stickerDisplayText, badgeListHtml } from './rewards.js';
 import { placePart, getActiveBuild, buildPaletteHtml, getAvailableBuilds, setActiveBuild } from './builds.js';
 import { initDragDrop }               from './dragdrop.js';
 import { recordAnswer, recordSession, renderProgressScreen } from './progress.js';
@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
   initNavigation();
 
   // 3. Render initial home screen UI
-  updateStarDisplay();
+  updateBlockDisplay();
 
   // 4. React to screen changes
   document.addEventListener('screenchange', onScreenChange);
@@ -63,12 +63,15 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Star display (shown in the header on every screen)
+// Block / sticker display (shown in the header on every screen)
 // ---------------------------------------------------------------------------
 
-function updateStarDisplay() {
-  document.querySelectorAll('[data-star-display]').forEach((el) => {
-    el.textContent = starDisplayText();
+function updateBlockDisplay() {
+  document.querySelectorAll('[data-block-display]').forEach((el) => {
+    el.textContent = blockDisplayText();
+  });
+  document.querySelectorAll('[data-sticker-display]').forEach((el) => {
+    el.textContent = stickerDisplayText();
   });
 }
 
@@ -239,13 +242,27 @@ function submitAnswer(choiceValue) {
   const correct = checkAnswer(question, givenAnswer);
   recordAnswer({ question, given: givenAnswer, correct });
 
+  // Award blocks immediately on correct answers (streak already updated above)
+  let rewardInfo = null;
+  if (correct) {
+    rewardInfo = earnBlocksForAnswer(question.difficulty);
+    updateBlockDisplay();
+  }
+
   state.session.answers.push({ question, given: givenAnswer, correct });
   state.session.currentQuestionIndex += 1;
 
   const feedback = document.querySelector('[data-feedback]');
   if (feedback) {
-    feedback.textContent = correct ? '✅ Goed zo!' : `❌ Het antwoord was ${question.answer}`;
-    feedback.className   = `exercise__feedback exercise__feedback--${correct ? 'correct' : 'wrong'}`;
+    if (correct) {
+      const bonusText = rewardInfo.bonusBlocks > 0
+        ? ` (+${rewardInfo.bonusBlocks} bonus!)` : '';
+      const stickerText = rewardInfo.stickerEarned ? ' 🌟 Sticker!' : '';
+      feedback.textContent = `✅ +${rewardInfo.baseBlocks} 🧱${bonusText}${stickerText}`;
+    } else {
+      feedback.textContent = `❌ Het antwoord was ${question.answer}`;
+    }
+    feedback.className = `exercise__feedback exercise__feedback--${correct ? 'correct' : 'wrong'}`;
   }
 
   // Brief delay before next question
@@ -262,21 +279,22 @@ function finishSession() {
   const { answers, activeOperation } = state.session;
   const correctCount = answers.filter((a) => a.correct).length;
   const total        = answers.length;
-
-  const starsEarned = awardSessionStars(correctCount, total);
+  // Blocks were credited per-answer inside earnBlocksForAnswer.
+  // Count the minimum (1 per correct) for the session record; real total is in state.
+  const blocksEarned = correctCount;
 
   recordSession({
-    date:        new Date().toISOString(),
-    operationId: activeOperation,
-    correct:     correctCount,
+    date:         new Date().toISOString(),
+    operationId:  activeOperation,
+    correct:      correctCount,
     total,
-    starsEarned,
+    blocksEarned: correctCount, // min accounting; real totals are in state
   });
 
   const newBadges = evaluateBadges();
-  updateStarDisplay();
+  updateBlockDisplay();
 
-  renderResultScreen(correctCount, total, starsEarned, newBadges);
+  renderResultScreen(correctCount, total, newBadges);
   navigateTo('screen-result');
 }
 
@@ -284,7 +302,7 @@ function finishSession() {
 // Result screen
 // ---------------------------------------------------------------------------
 
-function renderResultScreen(correct, total, stars, newBadges) {
+function renderResultScreen(correct, total, newBadges) {
   const screen = document.getElementById('screen-result');
   if (!screen) return;
 
@@ -297,7 +315,7 @@ function renderResultScreen(correct, total, stars, newBadges) {
         ${isPerfect ? '🎉 Perfect!' : '👍 Goed gedaan!'}
       </p>
       <p class="result__detail">${correct} van de ${total} goed</p>
-      <p class="result__stars">+${stars} ⭐</p>
+      <p class="result__blocks">${blockDisplayText()}</p>
       ${newBadges.length > 0
         ? `<div class="result__badges">
              <p>Nieuwe badge${newBadges.length > 1 ? 's' : ''}!</p>
@@ -376,8 +394,7 @@ function onPartDropped({ detail: { partId, slotId } }) {
 
   const { placed, buildCompleted } = placePart(partId);
   if (placed) {
-    updateStarDisplay();
-    evaluateBadges();
+      updateBlockDisplay();
     renderBuildsScreen();
 
     if (buildCompleted) {
