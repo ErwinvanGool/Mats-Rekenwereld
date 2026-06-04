@@ -26,7 +26,7 @@ import { initDragDrop }               from './dragdrop.js';
 import { recordAnswer, recordSession, renderProgressScreen } from './progress.js';
 import { initPinScreen, initParentPanel } from './parent-settings.js';
 import { OPERATIONS, BUILDS }         from './data.js';
-import { playCorrectSound, playWrongSound, playHintSound, playBrickSound, playCompleteSound, playBonusSound, playUnlockSound } from './sounds.js';
+import { playCorrectSound, playWrongSound, playHintSound, playBrickSound, playCompleteSound, playBonusSound, playUnlockSound, playWorkshopEnter } from './sounds.js';
 import { launchConfetti, launchFireworks, popStarsAt } from './confetti.js';
 import { showStickerModal, getStickerForIndex } from './stickers.js';
 
@@ -115,6 +115,7 @@ function onScreenChange({ detail: { screenId } }) {
 
   if (screenId === 'screen-builds') {
     renderBuildsScreen();
+    playWorkshopEnter();
   }
 
   if (screenId === 'screen-parent-panel') {
@@ -458,6 +459,31 @@ function renderResultScreen(correct, total, newBadges) {
 // Builds / workshop screen
 // ---------------------------------------------------------------------------
 
+/**
+ * Progressive SVG reveal: dim unplaced parts, illuminate placed ones.
+ * Groups in the SVG with [data-part-id] (space-separated part IDs) are
+ * greyed out until any matching part is placed, then they glow in.
+ *
+ * @param {HTMLElement|null} containerEl  – wraps the inline SVG
+ * @param {object}           build        – active Build definition
+ */
+function _refreshReferenceSvg(containerEl, build) {
+  if (!containerEl) return;
+  containerEl.querySelectorAll('[data-part-id]').forEach((groupEl) => {
+    const ids        = groupEl.dataset.partId.split(' ').map((s) => s.trim()).filter(Boolean);
+    const anyPlaced  = ids.some((id) => isPartPlaced(id));
+    const wasPlaced  = groupEl.classList.contains('svg-part--placed');
+    groupEl.classList.toggle('svg-part--placed',   anyPlaced);
+    groupEl.classList.toggle('svg-part--unplaced', !anyPlaced);
+    // Trigger the pop animation only for parts newly placed in this call
+    if (anyPlaced && !wasPlaced) {
+      groupEl.classList.remove('svg-part--pop');
+      void groupEl.getBoundingClientRect(); // force reflow to restart animation
+      groupEl.classList.add('svg-part--pop');
+    }
+  });
+}
+
 function renderBuildsScreen() {
   const screen = document.getElementById('screen-builds');
   if (!screen) return;
@@ -512,6 +538,7 @@ function renderBuildsScreen() {
     if (htmlRefEl) {
       htmlRefEl.hidden = false;
       htmlRefEl.innerHTML = `<div class="lego-reference" aria-label="Voorbeeld ${build.label}" role="img">${build.referenceSvg}</div>`;
+      _refreshReferenceSvg(htmlRefEl, build);
     }
     if (htmlCvsEl) htmlCvsEl.hidden = true;
     if (legoCvsEl) legoCvsEl.hidden = false;
@@ -596,12 +623,9 @@ function _renderLegoPalette(paletteEl, build) {
     });
   });
 
-  // Pulse the first available (unlocked, unplaced) chip to guide the child's eye.
+  // Persistent heartbeat on the first available chip – "calling out" to be placed.
   const firstAvailable = paletteEl.querySelector('.lego-chip--available');
-  if (firstAvailable) {
-    firstAvailable.classList.add('lego-chip--pulse');
-    setTimeout(() => firstAvailable.classList.remove('lego-chip--pulse'), 3000);
-  }
+  if (firstAvailable) firstAvailable.classList.add('lego-chip--calling');
 }
 
 /** Handle a brick-placement event dispatched by lego-canvas.js.
@@ -621,6 +645,9 @@ function onLegoBrickPlaced({ detail: { partId, atDesignPosition } }) {
     const screen = document.getElementById('screen-builds');
     if (screen) _renderLegoPalette(screen.querySelector('[data-build-palette]'), getActiveBuild());
     renderLegoCanvas();
+    // Progressive SVG reveal: illuminate the newly placed part
+    const refEl = screen?.querySelector('[data-build-reference]');
+    _refreshReferenceSvg(refEl, getActiveBuild());
     showBuildFeedback('⭐ Super! Goed geplaatst!', true);
     playBrickSound();
     if (buildCompleted) {
@@ -656,6 +683,9 @@ function onPartDropped({ detail: { partId, slotId } }) {
   if (placed) {
     updateBlockDisplay();
     renderBuildsScreen();
+    // Progressive SVG reveal: illuminate the newly placed part
+    const refEl = screen?.querySelector('[data-build-reference]');
+    _refreshReferenceSvg(refEl, getActiveBuild());
     showBuildFeedback('⭐ Super! Goed geplaatst!', true);
     playBrickSound();
     // Pop stars at the filled slot after re-render
@@ -694,13 +724,15 @@ function showBuildComplete() {
     <span class="complete-overlay__icon" aria-hidden="true">🎉</span>
     <p class="complete-overlay__title">Klaar!</p>
     <p class="complete-overlay__badge">${build.completionBadge}</p>
-    <div class="complete-overlay__svg" aria-label="${build.label} klaar">${build.referenceSvg}</div>
+    <div class="complete-overlay__svg build-alive build-alive--${build.id}" aria-label="${build.label} klaar">${build.referenceSvg}</div>
     <p class="complete-overlay__reward">+${build.rewards.stickers} 🌟  +${build.rewards.bonusBlocks} 🧱</p>
     <button class="btn btn--cta complete-overlay__btn" data-nav="screen-worldmap">
       🌍 Terug naar de kaart
     </button>
   `;
   overlay.hidden = false;
+  // Mark all parts as placed in the overlay SVG (build is complete)
+  _refreshReferenceSvg(overlay.querySelector('.complete-overlay__svg'), build);
 
   // Credit stickers + bonus blocks for build completion
   state.progress.earnedStickers += build.rewards.stickers;

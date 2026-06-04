@@ -76,14 +76,20 @@ export const BUILDS = [
     theme: 'voertuig',
     completionBadge: 'Autorijder! 🚗',
     referenceSvg: `<svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
-      <rect x="15" y="52" width="170" height="52" rx="10" fill="#FF6B35"/>
-      <rect x="55" y="20" width="95" height="38" rx="8" fill="#FF6B35"/>
-      <rect x="65" y="26" width="36" height="26" rx="4" fill="#87CEEB" opacity="0.9"/>
-      <rect x="112" y="26" width="28" height="26" rx="4" fill="#87CEEB" opacity="0.9"/>
-      <circle cx="50" cy="108" r="20" fill="#2d2d2d"/>
-      <circle cx="50" cy="108" r="9" fill="#888"/>
-      <circle cx="150" cy="108" r="20" fill="#2d2d2d"/>
-      <circle cx="150" cy="108" r="9" fill="#888"/>
+      <g data-part-id="car_body">
+        <rect x="15" y="52" width="170" height="52" rx="10" fill="#FF6B35"/>
+        <rect x="55" y="20" width="95" height="38" rx="8" fill="#FF6B35"/>
+      </g>
+      <g data-part-id="car_window">
+        <rect x="65" y="26" width="36" height="26" rx="4" fill="#87CEEB" opacity="0.9"/>
+        <rect x="112" y="26" width="28" height="26" rx="4" fill="#87CEEB" opacity="0.9"/>
+      </g>
+      <g data-part-id="car_wheel_fl car_wheel_fr car_wheel_rl car_wheel_rr">
+        <circle cx="50" cy="108" r="20" fill="#2d2d2d"/>
+        <circle cx="50" cy="108" r="9" fill="#888"/>
+        <circle cx="150" cy="108" r="20" fill="#2d2d2d"/>
+        <circle cx="150" cy="108" r="9" fill="#888"/>
+      </g>
     </svg>`,
     parts: [
       { id: 'car_body',     label: 'Carrosserie',        blocksToUnlock: 0, slot: 'body',     emoji: '🟧', color: '#FF6B35' },
@@ -127,13 +133,25 @@ export const BUILDS = [
     theme: 'gebouw',
     completionBadge: 'Bouwmeester! 🏠',
     referenceSvg: `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
-      <rect x="30" y="82" width="140" height="75" fill="#FBBF24"/>
-      <polygon points="18,88 100,12 182,88" fill="#EF4444"/>
-      <rect x="82" y="122" width="36" height="35" rx="3" fill="#92400E"/>
-      <rect x="42" y="95" width="28" height="22" rx="3" fill="#87CEEB"/>
-      <rect x="130" y="95" width="28" height="22" rx="3" fill="#87CEEB"/>
-      <rect x="128" y="22" width="18" height="36" rx="3" fill="#9CA3AF"/>
-      <rect x="96" y="122" width="8" height="10" rx="2" fill="#D97706"/>
+      <g data-part-id="house_base">
+        <rect x="30" y="82" width="140" height="75" fill="#FBBF24"/>
+      </g>
+      <g data-part-id="house_roof">
+        <polygon points="18,88 100,12 182,88" fill="#EF4444"/>
+      </g>
+      <g data-part-id="house_door">
+        <rect x="82" y="122" width="36" height="35" rx="3" fill="#92400E"/>
+        <rect x="96" y="122" width="8" height="10" rx="2" fill="#D97706"/>
+      </g>
+      <g data-part-id="house_window_l">
+        <rect x="42" y="95" width="28" height="22" rx="3" fill="#87CEEB"/>
+      </g>
+      <g data-part-id="house_window_r">
+        <rect x="130" y="95" width="28" height="22" rx="3" fill="#87CEEB"/>
+      </g>
+      <g data-part-id="house_chimney">
+        <rect x="128" y="22" width="18" height="36" rx="3" fill="#9CA3AF"/>
+      </g>
     </svg>`,
     parts: [
       { id: 'house_base',     label: 'Muren',        blocksToUnlock: 10, slot: 'base',     emoji: '🟨', color: '#FBBF24' },
@@ -171,16 +189,26 @@ export const BUILDS = [
     theme: 'dier',
     completionBadge: 'Dinosaurusjager! 🦕',
     referenceSvg: `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
-      <ellipse cx="88" cy="98" rx="62" ry="42" fill="#4ADE80"/>
-      <ellipse cx="162" cy="68" rx="32" ry="26" fill="#4ADE80"/>
-      <circle cx="174" cy="60" r="5" fill="#1a1a1a"/>
-      <path d="M148,78 Q162,88 176,78" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
-      <path d="M28,92 Q12,115 8,132 Q22,118 36,108" fill="#4ADE80"/>
-      <rect x="58" y="132" width="20" height="28" rx="7" fill="#22C55E"/>
-      <rect x="98" y="132" width="20" height="28" rx="7" fill="#22C55E"/>
-      <polygon points="72,52 78,66 66,66" fill="#15803D"/>
-      <polygon points="88,46 94,60 82,60" fill="#15803D"/>
-      <polygon points="104,50 110,64 98,64" fill="#15803D"/>
+      <g data-part-id="dino_body">
+        <ellipse cx="88" cy="98" rx="62" ry="42" fill="#4ADE80"/>
+      </g>
+      <g data-part-id="dino_head">
+        <ellipse cx="162" cy="68" rx="32" ry="26" fill="#4ADE80"/>
+        <circle cx="174" cy="60" r="5" fill="#1a1a1a"/>
+        <path d="M148,78 Q162,88 176,78" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      </g>
+      <g data-part-id="dino_tail">
+        <path d="M28,92 Q12,115 8,132 Q22,118 36,108" fill="#4ADE80"/>
+      </g>
+      <g data-part-id="dino_leg_fl dino_leg_fr">
+        <rect x="58" y="132" width="20" height="28" rx="7" fill="#22C55E"/>
+        <rect x="98" y="132" width="20" height="28" rx="7" fill="#22C55E"/>
+      </g>
+      <g data-part-id="dino_spikes">
+        <polygon points="72,52 78,66 66,66" fill="#15803D"/>
+        <polygon points="88,46 94,60 82,60" fill="#15803D"/>
+        <polygon points="104,50 110,64 98,64" fill="#15803D"/>
+      </g>
     </svg>`,
     parts: [
       { id: 'dino_body',   label: 'Lichaam',            blocksToUnlock: 25, slot: 'body',   emoji: '🟢', color: '#4ADE80' },
@@ -218,14 +246,26 @@ export const BUILDS = [
     theme: 'ruimte',
     completionBadge: 'Ruimtevaarder! 🚀',
     referenceSvg: `<svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
-      <rect x="76" y="45" width="48" height="88" rx="8" fill="#60A5FA"/>
-      <polygon points="76,47 100,6 124,47" fill="#BFDBFE"/>
-      <polygon points="76,105 48,148 76,130" fill="#2563EB"/>
-      <polygon points="124,105 152,148 124,130" fill="#2563EB"/>
-      <rect x="86" y="133" width="28" height="14" rx="4" fill="#FCD34D"/>
-      <circle cx="100" cy="82" r="14" fill="#DBEAFE"/>
-      <circle cx="100" cy="82" r="9" fill="#7DD3FC"/>
-      <ellipse cx="100" cy="152" rx="14" ry="8" fill="#F97316" opacity="0.85"/>
+      <g data-part-id="rocket_body">
+        <rect x="76" y="45" width="48" height="88" rx="8" fill="#60A5FA"/>
+      </g>
+      <g data-part-id="rocket_nose">
+        <polygon points="76,47 100,6 124,47" fill="#BFDBFE"/>
+      </g>
+      <g data-part-id="rocket_fin_l">
+        <polygon points="76,105 48,148 76,130" fill="#2563EB"/>
+      </g>
+      <g data-part-id="rocket_fin_r">
+        <polygon points="124,105 152,148 124,130" fill="#2563EB"/>
+      </g>
+      <g data-part-id="rocket_engine">
+        <rect x="86" y="133" width="28" height="14" rx="4" fill="#FCD34D"/>
+        <ellipse cx="100" cy="152" rx="14" ry="8" fill="#F97316" opacity="0.85"/>
+      </g>
+      <g data-part-id="rocket_window">
+        <circle cx="100" cy="82" r="14" fill="#DBEAFE"/>
+        <circle cx="100" cy="82" r="9" fill="#7DD3FC"/>
+      </g>
     </svg>`,
     parts: [
       { id: 'rocket_body',   label: 'Raketlichaam', blocksToUnlock: 40, slot: 'body',   emoji: '🔷', color: '#60A5FA' },
@@ -263,22 +303,32 @@ export const BUILDS = [
     theme: 'voertuig',
     completionBadge: 'Brandweerheld! 🚒',
     referenceSvg: `<svg viewBox="0 0 220 140" xmlns="http://www.w3.org/2000/svg">
-      <rect x="18" y="58" width="180" height="58" rx="8" fill="#EF4444"/>
-      <rect x="132" y="26" width="64" height="38" rx="6" fill="#EF4444"/>
-      <rect x="142" y="32" width="22" height="24" rx="3" fill="#87CEEB"/>
-      <rect x="168" y="32" width="18" height="24" rx="3" fill="#87CEEB"/>
-      <rect x="38" y="36" width="80" height="7" rx="2" fill="#D1D5DB"/>
-      <rect x="43" y="24" width="4" height="30" rx="1" fill="#9CA3AF"/>
-      <rect x="63" y="24" width="4" height="30" rx="1" fill="#9CA3AF"/>
-      <rect x="83" y="24" width="4" height="30" rx="1" fill="#9CA3AF"/>
-      <rect x="103" y="24" width="4" height="30" rx="1" fill="#9CA3AF"/>
-      <circle cx="50" cy="66" r="11" fill="#F59E0B"/>
-      <circle cx="55" cy="118" r="18" fill="#1F2937"/>
-      <circle cx="55" cy="118" r="8" fill="#6B7280"/>
-      <circle cx="160" cy="118" r="18" fill="#1F2937"/>
-      <circle cx="160" cy="118" r="8" fill="#6B7280"/>
-      <rect x="162" y="14" width="18" height="14" rx="4" fill="#EF4444"/>
-      <circle cx="171" cy="11" r="5" fill="#FCD34D"/>
+      <g data-part-id="ft_body">
+        <rect x="18" y="58" width="180" height="58" rx="8" fill="#EF4444"/>
+        <rect x="132" y="26" width="64" height="38" rx="6" fill="#EF4444"/>
+        <rect x="142" y="32" width="22" height="24" rx="3" fill="#87CEEB"/>
+        <rect x="168" y="32" width="18" height="24" rx="3" fill="#87CEEB"/>
+      </g>
+      <g data-part-id="ft_ladder">
+        <rect x="38" y="36" width="80" height="7" rx="2" fill="#D1D5DB"/>
+        <rect x="43" y="24" width="4" height="30" rx="1" fill="#9CA3AF"/>
+        <rect x="63" y="24" width="4" height="30" rx="1" fill="#9CA3AF"/>
+        <rect x="83" y="24" width="4" height="30" rx="1" fill="#9CA3AF"/>
+        <rect x="103" y="24" width="4" height="30" rx="1" fill="#9CA3AF"/>
+      </g>
+      <g data-part-id="ft_hose">
+        <circle cx="50" cy="66" r="11" fill="#F59E0B"/>
+      </g>
+      <g data-part-id="ft_wheel_fl ft_wheel_fr ft_wheel_rl ft_wheel_rr">
+        <circle cx="55" cy="118" r="18" fill="#1F2937"/>
+        <circle cx="55" cy="118" r="8" fill="#6B7280"/>
+        <circle cx="160" cy="118" r="18" fill="#1F2937"/>
+        <circle cx="160" cy="118" r="8" fill="#6B7280"/>
+      </g>
+      <g data-part-id="ft_siren">
+        <rect x="162" y="14" width="18" height="14" rx="4" fill="#EF4444"/>
+        <circle cx="171" cy="11" r="5" fill="#FCD34D"/>
+      </g>
     </svg>`,
     parts: [
       { id: 'ft_body',     label: 'Cabine',              blocksToUnlock: 60, slot: 'body',     emoji: '🔴', color: '#EF4444' },

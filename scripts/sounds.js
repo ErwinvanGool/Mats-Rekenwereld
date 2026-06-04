@@ -119,3 +119,16 @@ export function playUnlockSound() {
     { freq: 900, t: 0.15, dur: 0.25, vol: 0.20 },
   ], 'sine');
 }
+
+/**
+ * Soft meditative chord when entering the build workshop.
+ * Warm, low tones that feel like "the workshop is ready".
+ */
+export function playWorkshopEnter() {
+  playNotes([
+    { freq: 261, t: 0,    dur: 0.6,  vol: 0.12 }, // C4
+    { freq: 329, t: 0.05, dur: 0.6,  vol: 0.10 }, // E4
+    { freq: 392, t: 0.10, dur: 0.7,  vol: 0.09 }, // G4
+    { freq: 523, t: 0.18, dur: 0.8,  vol: 0.08 }, // C5 (soft overtone)
+  ], 'sine');
+}
