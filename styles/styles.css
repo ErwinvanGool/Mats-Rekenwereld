@@ -204,13 +204,13 @@ button:focus-visible {
   position: sticky;
   top: 0;
   z-index: 100;
-  height: var(--header-height);
+  height: calc(var(--header-height) + env(safe-area-inset-top));
   background: linear-gradient(135deg, var(--c-orange) 0%, #ff8c42 100%);
   color: #fff;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: env(safe-area-inset-top) 1.5rem 0;
   box-shadow: 0 4px 0 var(--c-orange-dark), var(--shadow-md);
   /* Subtle stud pattern */
   background-image:
