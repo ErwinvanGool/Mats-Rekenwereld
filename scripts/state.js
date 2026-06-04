@@ -50,7 +50,7 @@ function defaultBuilds() {
 function defaultSettings() {
   return {
     /** 4-digit PIN to protect the parent panel (stored as string) */
-    parentPin: '1234',
+    parentPin: '2580',
     /** Operations enabled for sessions */
     enabledOperations: [OPERATIONS.addition.id],
     /** Difficulty level per operation: operationId → levelId */

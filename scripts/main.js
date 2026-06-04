@@ -912,7 +912,7 @@ function renderParentPanel() {
     </div>
 
     <h3 class="settings-group__heading">Beheer</h3>
-    <div class="parent-setting__actions">
+    <div class="parent-setting__actions" data-actions-area>
       <button class="btn btn--danger" data-action="reset-progress">Voortgang wissen</button>
       <button class="btn"            data-action="change-pin">Pincode wijzigen</button>
     </div>

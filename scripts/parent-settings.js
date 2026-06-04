@@ -170,46 +170,140 @@ export function initPinScreen(pinScreen, parentPanel) {
  * @param {HTMLElement} panel  – the #screen-parent-panel element
  */
 export function initParentPanel(panel, onAfterReset) {
-  // Operation toggles
+  // Operation toggles and sound toggle
   panel.addEventListener('change', (event) => {
     const toggle = event.target.closest('[data-operation-toggle]');
     if (toggle) {
-      setOperationEnabled(toggle.dataset.operationToggle, toggle.checked);
+      const result = setOperationEnabled(toggle.dataset.operationToggle, toggle.checked);
+      if (result.ok) {
+        showSaveToast(panel);
+      } else {
+        // Revert the checkbox if the operation cannot be disabled
+        toggle.checked = !toggle.checked;
+      }
     }
 
     const levelSelect = event.target.closest('[data-level-select]');
     if (levelSelect) {
       setOperationLevel(levelSelect.dataset.levelSelect, Number(levelSelect.value));
+      showSaveToast(panel);
     }
 
     const soundToggle = event.target.closest('[data-sound-toggle]');
     if (soundToggle) {
       setSoundEnabled(soundToggle.checked);
+      showSaveToast(panel);
     }
   });
 
-  // Reset progress button
+  // Action buttons (reset, change-pin, and inline confirmation steps)
   panel.addEventListener('click', (event) => {
+    // Step 1: Show inline reset confirmation
     if (event.target.closest('[data-action="reset-progress"]')) {
-      if (window.confirm('Weet je zeker dat je alle voortgang wilt wissen?')) {
-        resetProgress();
-        alert('Voortgang gewist.');
-        if (typeof onAfterReset === 'function') onAfterReset();
+      const actionsEl = panel.querySelector('[data-actions-area]');
+      if (actionsEl) {
+        actionsEl.innerHTML = `
+          <div class="reset-confirm">
+            <span class="reset-confirm__label">⚠️ Voortgang wissen?</span>
+            <button class="btn btn--danger btn--sm" data-action="confirm-reset">Ja, wissen</button>
+            <button class="btn btn--sm" data-action="cancel-reset">Annuleren</button>
+          </div>`;
       }
+      return;
     }
 
+    // Step 2a: Confirmed reset
+    if (event.target.closest('[data-action="confirm-reset"]')) {
+      resetProgress();
+      showSaveToast(panel);
+      if (typeof onAfterReset === 'function') onAfterReset();
+      return;
+    }
+
+    // Step 2b: Cancelled reset — restore default action buttons
+    if (event.target.closest('[data-action="cancel-reset"]')) {
+      restoreActionButtons(panel);
+      return;
+    }
+
+    // Step 1: Show inline PIN change form
     if (event.target.closest('[data-action="change-pin"]')) {
-      const newPin = window.prompt('Voer een nieuwe 4-cijferige pincode in:');
-      if (newPin !== null) {
-        const result = changePin(newPin);
-        if (result.ok) {
-          alert('Pincode gewijzigd.');
-        } else {
-          alert(result.error);
-        }
+      const actionsEl = panel.querySelector('[data-actions-area]');
+      if (actionsEl) {
+        actionsEl.innerHTML = `
+          <div class="pin-change-form">
+            <label class="pin-change-form__label" for="new-pin-input">Nieuwe pincode:</label>
+            <input id="new-pin-input"
+                   class="pin-change-form__input"
+                   type="password"
+                   inputmode="numeric"
+                   maxlength="4"
+                   pattern="[0-9]{4}"
+                   placeholder="••••"
+                   autocomplete="new-password"
+                   data-new-pin>
+            <button class="btn btn--sm" data-action="confirm-pin">Opslaan</button>
+            <button class="btn btn--sm" data-action="cancel-pin">Annuleren</button>
+          </div>
+          <p class="pin-error" data-pin-change-error role="alert"></p>`;
+        const input = actionsEl.querySelector('[data-new-pin]');
+        if (input) input.focus();
       }
+      return;
+    }
+
+    // Step 2a: Save new PIN
+    if (event.target.closest('[data-action="confirm-pin"]')) {
+      const input = panel.querySelector('[data-new-pin]');
+      const errorEl = panel.querySelector('[data-pin-change-error]');
+      const newPin = input ? input.value.trim() : '';
+      const result = changePin(newPin);
+      if (result.ok) {
+        restoreActionButtons(panel);
+        showSaveToast(panel);
+      } else {
+        if (errorEl) errorEl.textContent = result.error;
+      }
+      return;
+    }
+
+    // Step 2b: Cancel PIN change
+    if (event.target.closest('[data-action="cancel-pin"]')) {
+      restoreActionButtons(panel);
+      return;
     }
   });
+}
+
+/**
+ * Show a brief "Opgeslagen!" toast inside the parent panel.
+ * @param {HTMLElement} panel
+ */
+function showSaveToast(panel) {
+  let toast = document.querySelector('.save-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.className = 'save-toast';
+    toast.textContent = '✓ Opgeslagen!';
+    document.body.appendChild(toast);
+  }
+  toast.classList.remove('save-toast--visible');
+  // Force reflow so the animation restarts
+  void toast.offsetWidth;
+  toast.classList.add('save-toast--visible');
+}
+
+/**
+ * Restore the default action buttons (reset + change-pin) in the actions area.
+ * @param {HTMLElement} panel
+ */
+function restoreActionButtons(panel) {
+  const actionsEl = panel.querySelector('[data-actions-area]');
+  if (actionsEl) {
+    actionsEl.innerHTML = `
+      <button class="btn btn--danger" data-action="reset-progress">Voortgang wissen</button>
+      <button class="btn"            data-action="change-pin">Pincode wijzigen</button>`;
+  }
 }
 
 // ---------------------------------------------------------------------------
