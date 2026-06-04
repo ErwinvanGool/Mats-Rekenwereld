@@ -5,7 +5,9 @@
 
 import { state } from './state.js';
 import { saveState } from './storage.js';
-import { OPERATIONS } from './data.js';
+import { OPERATIONS, BUILDS } from './data.js';
+import { stickerCollectionHtml } from './stickers.js';
+import { badgeListHtml } from './rewards.js';
 
 // ---------------------------------------------------------------------------
 // Mutations (called from main.js after each answered question / session)
@@ -63,7 +65,7 @@ export function recordSession(record) {
  * @param {HTMLElement} container
  */
 export function renderProgressScreen(container) {
-  const { progress } = state;
+  const { progress, builds } = state;
   const accuracy =
     progress.totalAttempts > 0
       ? Math.round((progress.totalCorrect / progress.totalAttempts) * 100)
@@ -93,7 +95,20 @@ export function renderProgressScreen(container) {
         <span class="progress__stat-value">${progress.bestStreak}</span>
         <span class="progress__stat-label">🔥 Beste reeks</span>
       </div>
+      <div class="progress__stat">
+        <span class="progress__stat-value">${builds.completedBuilds.length}</span>
+        <span class="progress__stat-label">🏗️ Bouwwerken</span>
+      </div>
     </div>
+
+    <h3 class="progress__section-title">🌟 Mijn stickers</h3>
+    ${stickerCollectionHtml()}
+
+    <h3 class="progress__section-title">🏗️ Voltooide bouwwerken</h3>
+    ${renderCompletedBuilds(builds.completedBuilds)}
+
+    <h3 class="progress__section-title">🏅 Badges</h3>
+    <ul class="badge-list">${badgeListHtml()}</ul>
 
     <h3 class="progress__section-title">Laatste sessies</h3>
     ${renderHistoryTable(progress.history)}
@@ -106,6 +121,28 @@ export function renderProgressScreen(container) {
 // ---------------------------------------------------------------------------
 // Private helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * @param {string[]} completedIds
+ * @returns {string} HTML
+ */
+function renderCompletedBuilds(completedIds) {
+  if (completedIds.length === 0) {
+    return '<p class="progress__empty">Nog geen bouwwerken voltooid. Ga bouwen! 🏗️</p>';
+  }
+  const items = completedIds.map((id) => {
+    const build = BUILDS.find((b) => b.id === id);
+    if (!build) return '';
+    return `
+      <div class="completed-build-card">
+        <div class="completed-build-card__svg" aria-label="${build.label}">${build.referenceSvg}</div>
+        <span class="completed-build-card__emoji" aria-hidden="true">${build.emoji}</span>
+        <span class="completed-build-card__label">${build.label}</span>
+        <span class="completed-build-card__badge">✅ Voltooid</span>
+      </div>`;
+  }).join('');
+  return `<div class="completed-builds-grid">${items}</div>`;
+}
 
 /**
  * @param {SessionRecord[]} history

@@ -18,6 +18,8 @@ import { state } from './state.js';
 /** All registered screen element IDs */
 const SCREENS = [
   'screen-home',
+  'screen-worldmap',
+  'screen-build-select',
   'screen-operation',
   'screen-exercise',
   'screen-result',

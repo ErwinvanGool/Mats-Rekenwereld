@@ -25,6 +25,19 @@ import { initDragDrop }               from './dragdrop.js';
 import { recordAnswer, recordSession, renderProgressScreen } from './progress.js';
 import { initPinScreen, initParentPanel } from './parent-settings.js';
 import { OPERATIONS, BUILDS }         from './data.js';
+import { playCorrectSound, playWrongSound, playHintSound, playBrickSound, playCompleteSound, playBonusSound, playUnlockSound } from './sounds.js';
+import { launchConfetti, launchFireworks, popStarsAt } from './confetti.js';
+import { showStickerModal, getStickerForIndex } from './stickers.js';
+
+// ---------------------------------------------------------------------------
+// Per-question hint state
+// ---------------------------------------------------------------------------
+
+/** Number of wrong attempts on the current question. */
+let _wrongAttempts = 0;
+
+/** Build IDs that were already unlocked before this screen visit (for unlock animation). */
+let _previouslyUnlockedBuilds = [];
 
 // ---------------------------------------------------------------------------
 // Bootstrap
@@ -57,6 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const parentPanel  = document.getElementById('screen-parent-panel');
   if (pinScreen)   initPinScreen(pinScreen, parentPanel);
   if (parentPanel) initParentPanel(parentPanel);
+
+  // 8. World map
+  initWorldMap();
 
   // Start on the home screen
   navigateTo('screen-home');
@@ -92,6 +108,14 @@ function onScreenChange({ detail: { screenId } }) {
 
   if (screenId === 'screen-parent-panel') {
     renderParentPanel();
+  }
+
+  if (screenId === 'screen-worldmap') {
+    renderWorldMap();
+  }
+
+  if (screenId === 'screen-build-select') {
+    renderBuildSelectFromState();
   }
 }
 
@@ -174,6 +198,9 @@ function showCurrentQuestion() {
   const screen = document.getElementById('screen-exercise');
   if (!screen) return;
 
+  // Reset per-question wrong-attempt counter
+  _wrongAttempts = 0;
+
   const { questions, currentQuestionIndex } = state.session;
   if (currentQuestionIndex >= questions.length) {
     finishSession();
@@ -218,6 +245,9 @@ function showCurrentQuestion() {
       .join('');
   }
 
+  // Update streak display
+  updateStreakDisplay();
+
   // Clear feedback
   const feedback = screen.querySelector('[data-feedback]');
   if (feedback) {
@@ -226,10 +256,25 @@ function showCurrentQuestion() {
   }
 }
 
+/** Refresh the streak flame indicator in the exercise header. */
+function updateStreakDisplay() {
+  const streak = state.progress.currentStreak;
+  const el = document.querySelector('[data-streak-display]');
+  if (!el) return;
+  if (streak >= 3) {
+    el.textContent = `🔥 ${streak} op rij!`;
+    el.className = 'exercise__streak exercise__streak--active';
+  } else {
+    el.textContent = '';
+    el.className = 'exercise__streak';
+  }
+}
+
 /**
  * @param {string|number|undefined} choiceValue – provided when using MC buttons
  */
 function submitAnswer(choiceValue) {
+  const screen = document.getElementById('screen-exercise');
   const { questions, currentQuestionIndex } = state.session;
   const question = questions[currentQuestionIndex];
 
@@ -250,29 +295,93 @@ function submitAnswer(choiceValue) {
   }
 
   state.session.answers.push({ question, given: givenAnswer, correct });
-  state.session.currentQuestionIndex += 1;
 
   const feedback = document.querySelector('[data-feedback]');
-  if (feedback) {
-    if (correct) {
+
+  if (correct) {
+    _wrongAttempts = 0;
+    state.session.currentQuestionIndex += 1;
+
+    // Sound
+    if (rewardInfo.bonusBlocks > 0) {
+      playBonusSound();
+    } else {
+      playCorrectSound();
+    }
+
+    // Star pop on the clicked button
+    const clickedBtn = screen?.querySelector(`[data-choice="${givenAnswer}"]`);
+    if (clickedBtn) popStarsAt(clickedBtn, 16);
+
+    // Animate chosen button
+    clickedBtn?.classList.add('choice-btn--correct');
+
+    if (feedback) {
       const bonusText = rewardInfo.bonusBlocks > 0
-        ? ` (+${rewardInfo.bonusBlocks} bonus!)` : '';
+        ? ` +${rewardInfo.bonusBlocks} bonus! 🎉` : '';
       const stickerText = rewardInfo.stickerEarned ? ' 🌟 Sticker!' : '';
       feedback.textContent = `✅ +${rewardInfo.baseBlocks} 🧱${bonusText}${stickerText}`;
-    } else {
-      feedback.textContent = `❌ Het antwoord was ${question.answer}`;
+      feedback.className = 'exercise__feedback exercise__feedback--correct';
     }
-    feedback.className = `exercise__feedback exercise__feedback--${correct ? 'correct' : 'wrong'}`;
-  }
 
-  // Brief delay before next question
-  setTimeout(() => {
-    if (state.session.currentQuestionIndex < questions.length) {
-      showCurrentQuestion();
-    } else {
-      finishSession();
+    // Show sticker modal if one was just earned (delay slightly for UX flow)
+    if (rewardInfo.stickerEarned) {
+      const stickerIndex = state.progress.earnedStickers - 1;
+      const sticker = getStickerForIndex(stickerIndex);
+      setTimeout(() => showStickerModal(sticker), 900);
     }
-  }, 1200);
+
+    // Brief delay before next question
+    setTimeout(() => {
+      if (state.session.currentQuestionIndex < questions.length) {
+        showCurrentQuestion();
+      } else {
+        finishSession();
+      }
+    }, 1200);
+
+  } else {
+    _wrongAttempts += 1;
+    playWrongSound();
+
+    // Animate wrong button
+    const wrongBtn = screen?.querySelector(`[data-choice="${givenAnswer}"]`);
+    wrongBtn?.classList.add('choice-btn--wrong');
+    setTimeout(() => wrongBtn?.classList.remove('choice-btn--wrong'), 600);
+
+    if (feedback) {
+      feedback.className = 'exercise__feedback exercise__feedback--wrong';
+    }
+
+    // Hint system: escalating help after mistakes
+    if (_wrongAttempts === 1) {
+      if (feedback) feedback.textContent = '🤔 Probeer nog eens!';
+    } else if (_wrongAttempts === 2) {
+      // Second wrong: highlight the correct button
+      playHintSound();
+      highlightCorrectChoice(question.answer);
+      if (feedback) feedback.textContent = '💡 Kijk goed naar de gele knop!';
+    } else {
+      // Third+ wrong: reveal the answer
+      playHintSound();
+      highlightCorrectChoice(question.answer);
+      if (feedback) feedback.textContent = `💡 Het goede antwoord is ${question.answer}!`;
+    }
+  }
+}
+
+/**
+ * Highlight the correct answer button with a gentle glow.
+ * @param {number} correctAnswer
+ */
+function highlightCorrectChoice(correctAnswer) {
+  const screen = document.getElementById('screen-exercise');
+  if (!screen) return;
+  screen.querySelectorAll('[data-choice]').forEach((btn) => {
+    if (Number(btn.dataset.choice) === correctAnswer) {
+      btn.classList.add('choice-btn--hint');
+    }
+  });
 }
 
 function finishSession() {
@@ -418,8 +527,11 @@ function onPartDropped({ detail: { partId, slotId } }) {
     renderBuildsScreen();
     showBuildFeedback('⭐ Super! Goed geplaatst!', true);
     playBrickSound();
+    // Pop stars at the filled slot after re-render
+    const filledSlot = canvas.querySelector(`[data-expects-part="${partId}"]`);
+    if (filledSlot) popStarsAt(filledSlot, 10);
     if (buildCompleted) {
-      setTimeout(() => showBuildComplete(), 500);
+      setTimeout(() => showBuildComplete(), 600);
     }
   }
 }
@@ -440,70 +552,182 @@ function showBuildFeedback(msg, isPositive) {
   el._feedbackTimer = setTimeout(() => { el.hidden = true; }, 2000);
 }
 
-/** Celebrate a completed build with confetti overlay. */
+/** Celebrate a completed build with fireworks overlay. */
 function showBuildComplete() {
   const screen  = document.getElementById('screen-builds');
   const build   = getActiveBuild();
   const overlay = screen?.querySelector('[data-build-complete-overlay]');
   if (!overlay) return;
 
-  const dots = Array.from({ length: 24 }, (_, i) =>
-    `<span class="confetti-dot" style="--i:${i};--hue:${(i * 15) % 360}"></span>`
-  ).join('');
-
   overlay.innerHTML = `
-    <div class="complete-overlay__confetti" aria-hidden="true">${dots}</div>
     <span class="complete-overlay__icon" aria-hidden="true">🎉</span>
     <p class="complete-overlay__title">Klaar!</p>
     <p class="complete-overlay__badge">${build.completionBadge}</p>
     <div class="complete-overlay__svg" aria-label="${build.label} klaar">${build.referenceSvg}</div>
+    <p class="complete-overlay__reward">+${build.rewards.stickers} 🌟  +${build.rewards.bonusBlocks} 🧱</p>
     <button class="btn btn--cta complete-overlay__btn" data-nav="screen-worldmap">
       🌍 Terug naar de kaart
     </button>
   `;
   overlay.hidden = false;
+
+  // Credit stickers + bonus blocks for build completion
+  state.progress.earnedStickers += build.rewards.stickers;
+  state.progress.earnedBlocks   += build.rewards.bonusBlocks;
+  if (!state.builds.completedBuilds.includes(build.id)) {
+    state.builds.completedBuilds.push(build.id);
+  }
+  evaluateBadges();
+  saveState();
+  updateBlockDisplay();
+
   playCompleteSound();
+  launchFireworks();
 }
 
-/** Play a short "brick snap" tone using the Web Audio API. */
-function playBrickSound() {
-  if (!state.settings.soundEnabled) return;
-  try {
-    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
-    const osc  = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    osc.type = 'triangle';
-    osc.frequency.setValueAtTime(440, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.08);
-    gain.gain.setValueAtTime(0.25, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
-    osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.35);
-  } catch (_) { /* audio not available */ }
+// ---------------------------------------------------------------------------
+// World map
+// ---------------------------------------------------------------------------
+
+/** One-time world map setup: delegate click to map pins. */
+function initWorldMap() {
+  const grid = document.querySelector('[data-worldmap-grid]');
+  if (!grid) return;
+  grid.addEventListener('click', (event) => {
+    const pin = event.target.closest('[data-build-id]');
+    if (!pin || pin.classList.contains('map-pin--locked')) return;
+    const buildId = pin.dataset.buildId;
+    selectBuild(buildId);
+  });
 }
 
-/** Play a celebratory fanfare on build completion. */
-function playCompleteSound() {
-  if (!state.settings.soundEnabled) return;
-  try {
-    const ctx   = new (window.AudioContext || window.webkitAudioContext)();
-    const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
-    notes.forEach((freq, i) => {
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = 'triangle';
-      const t = ctx.currentTime + i * 0.13;
-      osc.frequency.setValueAtTime(freq, t);
-      gain.gain.setValueAtTime(0.22, t);
-      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
-      osc.start(t);
-      osc.stop(t + 0.45);
-    });
-  } catch (_) { /* audio not available */ }
+/**
+ * Render / refresh the world map grid, animating newly-unlocked pins.
+ */
+function renderWorldMap() {
+  const grid = document.querySelector('[data-worldmap-grid]');
+  if (!grid) return;
+
+  const nowUnlocked = BUILDS.filter(
+    (b) => state.progress.earnedBlocks >= b.blocksRequired
+  ).map((b) => b.id);
+
+  // Detect pins that just became unlocked since last render
+  const newlyUnlocked = nowUnlocked.filter(
+    (id) => !_previouslyUnlockedBuilds.includes(id)
+  );
+  if (newlyUnlocked.length > 0) {
+    playUnlockSound();
+  }
+
+  grid.innerHTML = BUILDS.map((build) => {
+    const isUnlocked  = state.progress.earnedBlocks >= build.blocksRequired;
+    const isDone      = state.builds.completedBuilds.includes(build.id);
+    const isNew       = newlyUnlocked.includes(build.id);
+
+    const stateClass = isDone
+      ? 'map-pin--done'
+      : isUnlocked
+        ? `map-pin--active${isNew ? ' map-pin--newly-unlocked' : ''}`
+        : 'map-pin--locked';
+
+    const badge = isDone
+      ? '✅'
+      : isUnlocked
+        ? '🔓'
+        : `🔒 ${build.blocksRequired}🧱`;
+
+    return `
+      <div class="map-pin ${stateClass}"
+           data-build-id="${build.id}"
+           role="button"
+           tabindex="${isUnlocked ? 0 : -1}"
+           aria-disabled="${!isUnlocked}"
+           aria-label="${build.label}${isDone ? ' – voltooid' : isUnlocked ? '' : ' – vergrendeld'}"
+      >
+        <span class="map-pin__icon" aria-hidden="true">${build.emoji}</span>
+        <span class="map-pin__label">${build.label}</span>
+        <span class="map-pin__badge" aria-hidden="true">${badge}</span>
+      </div>`;
+  }).join('');
+
+  _previouslyUnlockedBuilds = nowUnlocked;
+}
+
+/**
+ * Select a build and navigate to the build-select screen.
+ * @param {string} buildId
+ */
+function selectBuild(buildId) {
+  setActiveBuild(buildId);
+  state._selectedBuildId = buildId;
+  renderBuildSelectFromState();
+  navigateTo('screen-build-select');
+}
+
+/** Render the build-select detail panel for the currently selected build. */
+function renderBuildSelectFromState() {
+  const buildId = state.builds.activeBuildId;
+  const build   = BUILDS.find((b) => b.id === buildId);
+  if (!build) return;
+
+  const screen     = document.getElementById('screen-build-select');
+  if (!screen) return;
+
+  const detailEl   = screen.querySelector('[data-build-select-detail]');
+  const lockedEl   = screen.querySelector('[data-build-locked]');
+  const actionsEl  = screen.querySelector('[data-build-actions]');
+  if (!detailEl) return;
+
+  const isUnlocked = state.progress.earnedBlocks >= build.blocksRequired;
+  const isDone     = state.builds.completedBuilds.includes(build.id);
+  const placed     = build.parts.filter((p) => state.builds.placedParts.includes(p.id)).length;
+  const total      = build.parts.length;
+  const pct        = total > 0 ? Math.round((placed / total) * 100) : 0;
+
+  detailEl.innerHTML = `
+    <div class="build-select__preview" aria-label="${build.label} voorbeeld">
+      ${build.referenceSvg}
+    </div>
+    <h2 class="build-select__name">${build.emoji} ${build.label}</h2>
+    <div class="build-select__meta">
+      <span class="build-select__difficulty">${difficultyStars(build.difficulty)}</span>
+      <span class="build-select__blocks-needed">🧱 ${build.blocksToComplete} blokken nodig</span>
+    </div>
+    <div class="build-select__progress-wrap" aria-label="Bouwvoortgang">
+      <div class="build-select__progress-bar"
+           role="progressbar"
+           aria-valuemin="0" aria-valuemax="100" aria-valuenow="${pct}"
+           style="--progress:${pct}%"></div>
+    </div>
+    <p class="build-select__progress-label">${placed} / ${total} stukken geplaatst</p>
+    ${isDone ? '<p class="build-select__done-badge">✅ Voltooid!</p>' : ''}
+  `;
+
+  if (lockedEl)  lockedEl.hidden  = isUnlocked;
+  if (actionsEl) actionsEl.hidden = !isUnlocked;
+
+  if (!isUnlocked && lockedEl) {
+    const needed = build.blocksRequired - state.progress.earnedBlocks;
+    const starsNeededEl = lockedEl.querySelector('[data-stars-needed]');
+    if (starsNeededEl) starsNeededEl.textContent = needed;
+  }
+
+  // Wire the "start build" button
+  const startBtn = screen.querySelector('[data-action="start-build"]');
+  if (startBtn && !startBtn.dataset.listenerReady) {
+    startBtn.addEventListener('click', () => navigateTo('screen-builds'));
+    startBtn.dataset.listenerReady = '1';
+  }
+}
+
+/**
+ * @param {'easy'|'medium'|'hard'} difficulty
+ * @returns {string}
+ */
+function difficultyStars(difficulty) {
+  const map = { easy: '⭐', medium: '⭐⭐', hard: '⭐⭐⭐' };
+  return map[difficulty] ?? '⭐';
 }
 
 // ---------------------------------------------------------------------------
