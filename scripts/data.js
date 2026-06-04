@@ -143,6 +143,19 @@ export const BUILDS = [
       { id: 'house_window_r', label: 'Raam rechts',  blocksToUnlock: 15, slot: 'window_r', emoji: '🪟', color: '#87CEEB' },
       { id: 'house_chimney',  label: 'Schoorsteen',  blocksToUnlock: 17, slot: 'chimney',  emoji: '🟫', color: '#9CA3AF' },
     ],
+    // Top-down floor-plan view: roof strip at top, walls below, windows + door on layer 1
+    brickGrid: {
+      baseplateWidth: 10,
+      baseplateDepth: 10,
+      bricks: [
+        { partId: 'house_base',     col: 1, row: 2, layer: 0, w: 8, d: 6, color: '#FBBF24', label: 'Muren',        blocksToUnlock: 10 },
+        { partId: 'house_roof',     col: 0, row: 0, layer: 0, w: 10, d: 2, color: '#EF4444', label: 'Dak',          blocksToUnlock: 12 },
+        { partId: 'house_door',     col: 4, row: 7, layer: 1, w: 2,  d: 1, color: '#92400E', label: 'Deur',         blocksToUnlock: 14 },
+        { partId: 'house_window_l', col: 2, row: 3, layer: 1, w: 2,  d: 2, color: '#87CEEB', label: 'Raam links',   blocksToUnlock: 15 },
+        { partId: 'house_window_r', col: 6, row: 3, layer: 1, w: 2,  d: 2, color: '#87CEEB', label: 'Raam rechts',  blocksToUnlock: 15 },
+        { partId: 'house_chimney',  col: 7, row: 0, layer: 1, w: 2,  d: 2, color: '#9CA3AF', label: 'Schoorsteen',  blocksToUnlock: 17 },
+      ],
+    },
   },
   {
     id: 'dinosaur',
@@ -177,6 +190,19 @@ export const BUILDS = [
       { id: 'dino_leg_fr', label: 'Poot voor-rechts',   blocksToUnlock: 31, slot: 'leg_fr', emoji: '🦵', color: '#16A34A' },
       { id: 'dino_spikes', label: 'Stekels',            blocksToUnlock: 33, slot: 'spikes', emoji: '⚡', color: '#15803D' },
     ],
+    // Dinosaur walking right: tail left, body centre, head right, legs below, spikes on top
+    brickGrid: {
+      baseplateWidth: 14,
+      baseplateDepth: 9,
+      bricks: [
+        { partId: 'dino_body',   col: 2,  row: 2, layer: 0, w: 8, d: 5, color: '#4ADE80', label: 'Lichaam',          blocksToUnlock: 25 },
+        { partId: 'dino_head',   col: 10, row: 1, layer: 0, w: 4, d: 4, color: '#22C55E', label: 'Hoofd',            blocksToUnlock: 27 },
+        { partId: 'dino_tail',   col: 0,  row: 3, layer: 0, w: 2, d: 3, color: '#22C55E', label: 'Staart',           blocksToUnlock: 29 },
+        { partId: 'dino_leg_fl', col: 3,  row: 7, layer: 0, w: 3, d: 2, color: '#16A34A', label: 'Poot voor-links',  blocksToUnlock: 31 },
+        { partId: 'dino_leg_fr', col: 7,  row: 7, layer: 0, w: 3, d: 2, color: '#16A34A', label: 'Poot voor-rechts', blocksToUnlock: 31 },
+        { partId: 'dino_spikes', col: 3,  row: 1, layer: 1, w: 6, d: 2, color: '#15803D', label: 'Stekels',          blocksToUnlock: 33 },
+      ],
+    },
   },
   {
     id: 'rocket',
@@ -209,6 +235,19 @@ export const BUILDS = [
       { id: 'rocket_engine', label: 'Motor',        blocksToUnlock: 47, slot: 'engine', emoji: '🔥', color: '#FCD34D' },
       { id: 'rocket_window', label: 'Venster',      blocksToUnlock: 50, slot: 'window', emoji: '🔵', color: '#7DD3FC' },
     ],
+    // Rocket pointing upward: nose at top, body centre, fins left+right, engine + window on top
+    brickGrid: {
+      baseplateWidth: 12,
+      baseplateDepth: 14,
+      bricks: [
+        { partId: 'rocket_body',   col: 4, row: 3,  layer: 0, w: 4, d: 7, color: '#60A5FA', label: 'Raketlichaam', blocksToUnlock: 40 },
+        { partId: 'rocket_nose',   col: 4, row: 0,  layer: 0, w: 4, d: 3, color: '#BFDBFE', label: 'Neuskegel',    blocksToUnlock: 43 },
+        { partId: 'rocket_fin_l',  col: 1, row: 8,  layer: 0, w: 3, d: 3, color: '#2563EB', label: 'Linker vin',   blocksToUnlock: 45 },
+        { partId: 'rocket_fin_r',  col: 8, row: 8,  layer: 0, w: 3, d: 3, color: '#2563EB', label: 'Rechter vin',  blocksToUnlock: 45 },
+        { partId: 'rocket_engine', col: 4, row: 10, layer: 1, w: 4, d: 2, color: '#FCD34D', label: 'Motor',        blocksToUnlock: 47 },
+        { partId: 'rocket_window', col: 5, row: 4,  layer: 1, w: 2, d: 2, color: '#7DD3FC', label: 'Venster',      blocksToUnlock: 50 },
+      ],
+    },
   },
   {
     id: 'firetruck',
@@ -251,6 +290,21 @@ export const BUILDS = [
       { id: 'ft_wheel_rr', label: 'Wiel achter-rechts',  blocksToUnlock: 67, slot: 'wheel_rr', emoji: '⚫', color: '#1F2937' },
       { id: 'ft_siren',    label: 'Sirene',              blocksToUnlock: 69, slot: 'siren',    emoji: '🚨', color: '#FCD34D' },
     ],
+    // Fire truck driving left: cab right, ladder + hose on body, wheels at corners, siren on cab
+    brickGrid: {
+      baseplateWidth: 16,
+      baseplateDepth: 8,
+      bricks: [
+        { partId: 'ft_body',     col: 2,  row: 1, layer: 0, w: 12, d: 6, color: '#EF4444', label: 'Cabine',             blocksToUnlock: 60 },
+        { partId: 'ft_ladder',   col: 3,  row: 2, layer: 1, w: 10, d: 2, color: '#D1D5DB', label: 'Ladder',             blocksToUnlock: 62 },
+        { partId: 'ft_hose',     col: 3,  row: 4, layer: 1, w: 4,  d: 2, color: '#F59E0B', label: 'Slang',              blocksToUnlock: 64 },
+        { partId: 'ft_wheel_fl', col: 0,  row: 0, layer: 0, w: 2,  d: 3, color: '#1F2937', label: 'Wiel voor-links',    blocksToUnlock: 65 },
+        { partId: 'ft_wheel_fr', col: 0,  row: 5, layer: 0, w: 2,  d: 3, color: '#1F2937', label: 'Wiel voor-rechts',   blocksToUnlock: 65 },
+        { partId: 'ft_wheel_rl', col: 14, row: 0, layer: 0, w: 2,  d: 3, color: '#1F2937', label: 'Wiel achter-links',  blocksToUnlock: 67 },
+        { partId: 'ft_wheel_rr', col: 14, row: 5, layer: 0, w: 2,  d: 3, color: '#1F2937', label: 'Wiel achter-rechts', blocksToUnlock: 67 },
+        { partId: 'ft_siren',    col: 11, row: 1, layer: 1, w: 2,  d: 2, color: '#FCD34D', label: 'Sirene',             blocksToUnlock: 69 },
+      ],
+    },
   },
 ];
 

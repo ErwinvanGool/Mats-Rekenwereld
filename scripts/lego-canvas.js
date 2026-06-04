@@ -1,17 +1,22 @@
 /**
  * lego-canvas.js
- * Isometric LEGO-style canvas renderer for the build workshop.
+ * 2-D top-down flat LEGO grid renderer for the build workshop.
+ *
+ * The view is a flat overhead grid – like looking straight down at a LEGO
+ * baseplate.  Bricks are coloured rounded rectangles with stud circles on
+ * top.  Higher-layer bricks (e.g. the car window on layer 1) simply render
+ * on top of lower-layer ones.
  *
  * Architecture:
- *  - One HTML5 Canvas element covers the isometric baseplate scene.
- *  - "Design bricks" come from build.brickGrid.bricks; their placement is
- *    tracked persistently via the existing placePart() / isPartPlaced() system.
- *  - "Decorative bricks" are placed freely by the child (in-memory only).
- *  - The palette is rendered as HTML chips; selecting one then clicking the
- *    canvas places the brick (snapping to design position when in that zone,
- *    otherwise placing a 1×1 deco brick).
- *  - Dispatches a 'legoBrickPlaced' CustomEvent on the canvas element so
- *    main.js can call placePart() without creating a circular import.
+ *  - One HTML5 Canvas element covers the flat baseplate grid.
+ *  - "Design bricks" come from build.brickGrid.bricks; placement is tracked
+ *    via the existing placePart() / isPartPlaced() system (persisted).
+ *  - "Decorative bricks" are placed freely (in-memory only, not persisted).
+ *  - Selecting a chip then clicking a cell places the brick at its design
+ *    position (if the click lands in that brick's footprint) or as a free
+ *    1×1 deco brick elsewhere.
+ *  - Dispatches 'legoBrickPlaced' CustomEvent so main.js can persist without
+ *    creating a circular import.
  */
 
 import { isPartPlaced } from './builds.js';
@@ -20,11 +25,17 @@ import { isPartPlaced } from './builds.js';
 // Rendering constants
 // ---------------------------------------------------------------------------
 
-const TILE    = 22;   // half-width of one stud column in screen pixels
-const BRICK_H = 26;   // pixel height of one brick wall layer
-const STUD_RX = 6;    // stud ellipse x-radius
-const STUD_RY = 3;    // stud ellipse y-radius (≈ half of x)
-const STUD_H  = 5;    // how many px the stud cap rises above the top face
+const TILE    = 56;   // pixels per stud (square grid)
+const STUD_R  = 10;   // stud circle radius
+const BRICK_R = 5;    // brick rounded-corner radius
+const GAP     = 3;    // gap between adjacent bricks (shows baseplate underneath)
+const PAD     = 18;   // canvas padding around the baseplate
+
+// Baseplate colours
+const BASE_FILL     = '#4ea32e';
+const BASE_ALT_FILL = '#459c27';
+const BASE_STUD_CLR = '#3d8c22';
+const BASE_BORDER   = '#2e6618';
 
 // ---------------------------------------------------------------------------
 // Module state
@@ -33,23 +44,19 @@ const STUD_H  = 5;    // how many px the stud cap rises above the top face
 /** @type {HTMLCanvasElement|null} */
 let _canvas = null;
 /** @type {CanvasRenderingContext2D|null} */
-let _ctx = null;
+let _ctx    = null;
 /** @type {object|null} The active build definition (must have .brickGrid). */
-let _build = null;
+let _build  = null;
 
 /** Palette-selected partId (or null). */
 let _selectedPartId = null;
 
-/** Grid cell the pointer is hovering over, or null. @type {{col:number,row:number}|null} */
+/** Grid cell the pointer is hovering over. @type {{col:number,row:number}|null} */
 let _hoverCell = null;
 
 /** Bricks placed freely by the child – not persisted.
  *  @type {Array<{col:number,row:number,layer:number,w:number,d:number,color:string}>} */
 let _decoBricks = [];
-
-/** Canvas-space origin: isometric grid (0,0,0) maps to (_originX, _originY). */
-let _originX = 0;
-let _originY = 0;
 
 // ---------------------------------------------------------------------------
 // Public API
@@ -123,47 +130,25 @@ function _detach() {
 
 function _sizeCanvas() {
   const { baseplateWidth: W, baseplateDepth: D } = _build.brickGrid;
-  const maxLayer = 3;
-  const pad      = 1; // extra stud-grid margin around the baseplate
-
-  const totalW = W + pad * 2;
-  const totalD = D + pad * 2;
-
-  _canvas.width  = (totalW + totalD) * TILE + 20;
-  _canvas.height = (totalW + totalD) * (TILE / 2) + maxLayer * BRICK_H + STUD_H + 50;
-
-  // Origin: isometric (0,0) is TILE*pad from the left, at the top
-  _originX = totalD * TILE + 10;
-  _originY = 20 + maxLayer * BRICK_H + STUD_H + pad * (TILE / 2);
+  _canvas.width  = W * TILE + PAD * 2;
+  _canvas.height = D * TILE + PAD * 2;
 }
 
 // ---------------------------------------------------------------------------
-// Coordinate transforms
+// Coordinate helpers
 // ---------------------------------------------------------------------------
 
-/**
- * Isometric: convert grid (col, row, layer) → screen (x, y).
- * @returns {{x:number, y:number}}
- */
-function _iso(col, row, layer) {
+/** Grid cell (col, row) → top-left screen pixel. */
+function _cellToScreen(col, row) {
+  return { x: PAD + col * TILE, y: PAD + row * TILE };
+}
+
+/** Screen pixel (sx, sy) → grid cell (col, row). */
+function _screenToCell(sx, sy) {
   return {
-    x: _originX + (col - row) * TILE,
-    y: _originY + (col + row) * (TILE / 2) - layer * BRICK_H,
+    col: Math.floor((sx - PAD) / TILE),
+    row: Math.floor((sy - PAD) / TILE),
   };
-}
-
-/**
- * Inverse isometric: convert screen (sx, sy) → approximate grid (col, row).
- * Assumes layer = 0 (baseplate surface).
- * @returns {{col:number, row:number}}
- */
-function _screenToGrid(sx, sy) {
-  const dx = sx - _originX;
-  const dy = sy - _originY;
-  // Solve: dx = (col-row)*TILE, dy = (col+row)*(TILE/2)
-  const col = (dx / TILE + (2 * dy) / TILE) / 2;
-  const row = ((2 * dy) / TILE - dx / TILE)  / 2;
-  return { col: Math.floor(col), row: Math.floor(row) };
 }
 
 // ---------------------------------------------------------------------------
@@ -176,7 +161,7 @@ function _render() {
   _drawBaseplate();
   _drawGhosts();
   _drawPlacedBricks();
-  if (_hoverCell) _drawHoverTile(_hoverCell.col, _hoverCell.row);
+  if (_hoverCell) _drawHoverCell(_hoverCell.col, _hoverCell.row);
 }
 
 // ---------------------------------------------------------------------------
@@ -186,70 +171,45 @@ function _render() {
 function _drawBaseplate() {
   const { baseplateWidth: W, baseplateDepth: D } = _build.brickGrid;
 
-  // Tiles
+  // Base fill with rounded border
+  _ctx.fillStyle = BASE_FILL;
+  _roundRect(PAD, PAD, W * TILE, D * TILE, 8);
+  _ctx.fill();
+
+  // Alternating tile shade + stud dot per cell
   for (let c = 0; c < W; c++) {
     for (let r = 0; r < D; r++) {
-      const even = (c + r) % 2 === 0;
-      _drawDiamond(c, r, 0, even ? '#4e8a2e' : '#3f7524');
+      const { x, y } = _cellToScreen(c, r);
 
-      // Stud dot on each tile
-      const ctr = _iso(c + 0.5, r + 0.5, 0);
+      if ((c + r) % 2 === 0) {
+        _ctx.fillStyle = BASE_ALT_FILL;
+        _ctx.fillRect(x, y, TILE, TILE);
+      }
+
+      // Stud dot
       _ctx.beginPath();
-      _ctx.ellipse(ctr.x, ctr.y, STUD_RX * 0.58, STUD_RY * 0.58, 0, 0, Math.PI * 2);
-      _ctx.fillStyle = even ? '#3a6c1c' : '#306018';
+      _ctx.arc(x + TILE / 2, y + TILE / 2, STUD_R * 0.48, 0, Math.PI * 2);
+      _ctx.fillStyle = BASE_STUD_CLR;
       _ctx.fill();
     }
   }
 
-  // 3-D bottom edge of the baseplate
-  const edgeH    = TILE / 2;
-  const edgeColor = '#2a5010';
-
-  // Left edge (col = 0 face)
-  _ctx.beginPath();
-  for (let r = 0; r <= D; r++) {
-    const p = _iso(0, r, 0);
-    r === 0 ? _ctx.moveTo(p.x, p.y) : _ctx.lineTo(p.x, p.y);
-  }
-  for (let r = D; r >= 0; r--) {
-    const p = _iso(0, r, 0);
-    _ctx.lineTo(p.x, p.y + edgeH);
-  }
-  _ctx.closePath();
-  _ctx.fillStyle = edgeColor;
-  _ctx.fill();
-
-  // Right edge (row = D face)
-  _ctx.beginPath();
-  for (let c = W; c >= 0; c--) {
-    const p = _iso(c, D, 0);
-    c === W ? _ctx.moveTo(p.x, p.y) : _ctx.lineTo(p.x, p.y);
-  }
-  for (let c = 0; c <= W; c++) {
-    const p = _iso(c, D, 0);
-    _ctx.lineTo(p.x, p.y + edgeH);
-  }
-  _ctx.closePath();
-  _ctx.fillStyle = edgeColor;
-  _ctx.fill();
-}
-
-/** Draw a single 1×1 baseplate diamond (top face of a tile). */
-function _drawDiamond(col, row, layer, color) {
-  const tl = _iso(col,     row,     layer);
-  const tr = _iso(col + 1, row,     layer);
-  const br = _iso(col + 1, row + 1, layer);
-  const bl = _iso(col,     row + 1, layer);
-  _ctx.beginPath();
-  _ctx.moveTo(tl.x, tl.y);
-  _ctx.lineTo(tr.x, tr.y);
-  _ctx.lineTo(br.x, br.y);
-  _ctx.lineTo(bl.x, bl.y);
-  _ctx.closePath();
-  _ctx.fillStyle = color;
-  _ctx.fill();
-  _ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+  // Grid lines
+  _ctx.strokeStyle = 'rgba(0,0,0,0.10)';
   _ctx.lineWidth = 0.5;
+  for (let c = 1; c < W; c++) {
+    const x = PAD + c * TILE;
+    _ctx.beginPath(); _ctx.moveTo(x, PAD); _ctx.lineTo(x, PAD + D * TILE); _ctx.stroke();
+  }
+  for (let r = 1; r < D; r++) {
+    const y = PAD + r * TILE;
+    _ctx.beginPath(); _ctx.moveTo(PAD, y); _ctx.lineTo(PAD + W * TILE, y); _ctx.stroke();
+  }
+
+  // Outer border
+  _ctx.strokeStyle = BASE_BORDER;
+  _ctx.lineWidth = 3;
+  _roundRect(PAD, PAD, W * TILE, D * TILE, 8);
   _ctx.stroke();
 }
 
@@ -261,10 +221,10 @@ function _drawGhosts() {
   for (const brick of _build.brickGrid.bricks) {
     if (isPartPlaced(brick.partId)) continue;
     const isSelected = brick.partId === _selectedPartId;
-    _drawBrick(brick.col, brick.row, brick.layer, brick.w, brick.d, brick.color, {
-      alpha:     isSelected ? 0.42 : 0.18,
-      outline:   true,
-      glowColor: isSelected ? '#FFD700' : null,
+    _drawBrick2D(brick.col, brick.row, brick.w, brick.d, brick.color, {
+      alpha: isSelected ? 0.52 : 0.24,
+      ghost: true,
+      glow:  isSelected ? '#FFD700' : null,
     });
   }
 }
@@ -279,133 +239,110 @@ function _drawPlacedBricks() {
 
   for (const b of _build.brickGrid.bricks) {
     if (isPartPlaced(b.partId)) {
-      all.push({ col: b.col, row: b.row, layer: b.layer, w: b.w, d: b.d, color: b.color });
+      all.push({ col: b.col, row: b.row, layer: b.layer ?? 0, w: b.w, d: b.d, color: b.color });
     }
   }
 
-  // Painter's order: ascending (col + row + layer * 10)
-  all.sort((a, b) => (a.col + a.row + a.layer * 10) - (b.col + b.row + b.layer * 10));
+  // Sort by layer so higher-layer bricks render on top
+  all.sort((a, b) => a.layer - b.layer);
 
   for (const b of all) {
-    _drawBrick(b.col, b.row, b.layer, b.w, b.d, b.color, {});
+    _drawBrick2D(b.col, b.row, b.w, b.d, b.color, {});
   }
 }
 
 // ---------------------------------------------------------------------------
-// Hover tile highlight
+// Hover cell highlight
 // ---------------------------------------------------------------------------
 
-function _drawHoverTile(col, row) {
+function _drawHoverCell(col, row) {
   const { baseplateWidth: W, baseplateDepth: D } = _build.brickGrid;
   if (col < 0 || col >= W || row < 0 || row >= D) return;
-
-  const tl = _iso(col,     row,     0);
-  const tr = _iso(col + 1, row,     0);
-  const br = _iso(col + 1, row + 1, 0);
-  const bl = _iso(col,     row + 1, 0);
-  _ctx.beginPath();
-  _ctx.moveTo(tl.x, tl.y);
-  _ctx.lineTo(tr.x, tr.y);
-  _ctx.lineTo(br.x, br.y);
-  _ctx.lineTo(bl.x, bl.y);
-  _ctx.closePath();
-  _ctx.fillStyle = 'rgba(255,255,100,0.30)';
-  _ctx.fill();
+  const { x, y } = _cellToScreen(col, row);
+  _ctx.fillStyle = 'rgba(255,255,100,0.38)';
+  _ctx.fillRect(x, y, TILE, TILE);
 }
 
 // ---------------------------------------------------------------------------
-// Core brick drawing
+// Core 2-D brick drawing
 // ---------------------------------------------------------------------------
 
 /**
- * Draw an isometric LEGO brick.
- * @param {number} col      top-left grid column (col-axis = depth in iso)
- * @param {number} row      top-left grid row
- * @param {number} layer    vertical layer (0 = sitting on baseplate surface)
- * @param {number} w        width in studs (along the col direction)
- * @param {number} d        depth in studs (along the row direction)
- * @param {string} color    '#RRGGBB' hex
- * @param {object} [opts]   { alpha, outline, glowColor }
+ * Draw a flat top-down LEGO brick.
+ * @param {number} col   top-left grid column
+ * @param {number} row   top-left grid row
+ * @param {number} w     width in studs
+ * @param {number} d     depth in studs
+ * @param {string} color '#RRGGBB' hex
+ * @param {object} opts  { alpha, ghost, glow }
  */
-function _drawBrick(col, row, layer, w, d, color, opts = {}) {
-  const { alpha = 1, outline = false, glowColor = null } = opts;
-  const ctx = _ctx;
+function _drawBrick2D(col, row, w, d, color, opts = {}) {
+  const { alpha = 1, ghost = false, glow = null } = opts;
+  const { x, y } = _cellToScreen(col, row);
+  const bx = x + GAP;
+  const by = y + GAP;
+  const bw = w * TILE - GAP * 2;
+  const bh = d * TILE - GAP * 2;
 
-  ctx.globalAlpha = alpha;
-  if (glowColor) { ctx.shadowColor = glowColor; ctx.shadowBlur = 22; }
+  _ctx.globalAlpha = alpha;
+  if (glow) { _ctx.shadowColor = glow; _ctx.shadowBlur = 20; }
 
-  const topFace  = _bright(color,  38);
-  const rightFace = color;
-  const frontFace = _bright(color, -38);
-  const edgeClr   = _bright(color, -58);
+  if (!ghost) {
+    // Drop shadow (offset 3px)
+    _ctx.fillStyle = _bright(color, -55);
+    _roundRect(bx + 3, by + 3, bw, bh, BRICK_R);
+    _ctx.fill();
 
-  // Vertices of the top face (at layer+1 height)
-  const tl  = _iso(col,     row,     layer + 1);
-  const tr  = _iso(col + w, row,     layer + 1);
-  const br  = _iso(col + w, row + d, layer + 1);
-  const bl  = _iso(col,     row + d, layer + 1);
+    // Brick body
+    _ctx.fillStyle = color;
+    _roundRect(bx, by, bw, bh, BRICK_R);
+    _ctx.fill();
 
-  // Bottom rim of the vertical walls
-  const tr0 = _iso(col + w, row,     layer);
-  const br0 = _iso(col + w, row + d, layer);
-  const bl0 = _iso(col,     row + d, layer);
+    // Stud circles
+    const studFill  = _bright(color, 30);
+    const studEdge  = _bright(color, -20);
+    for (let ci = 0; ci < w; ci++) {
+      for (let ri = 0; ri < d; ri++) {
+        const cx = x + ci * TILE + TILE / 2;
+        const cy = y + ri * TILE + TILE / 2;
+        _ctx.beginPath();
+        _ctx.arc(cx, cy, STUD_R, 0, Math.PI * 2);
+        _ctx.fillStyle = studFill;
+        _ctx.fill();
+        _ctx.strokeStyle = studEdge;
+        _ctx.lineWidth = 1;
+        _ctx.stroke();
+      }
+    }
+  } else {
+    // Ghost: semi-transparent fill + dashed outline
+    _ctx.fillStyle = color;
+    _roundRect(bx, by, bw, bh, BRICK_R);
+    _ctx.fill();
 
-  // Top face
-  _poly([tl, tr, br, bl], topFace,   outline ? edgeClr : null);
-  // Right wall (col+w side)
-  _poly([tr, tr0, br0, br], rightFace, outline ? edgeClr : null);
-  // Front wall (row+d side)
-  _poly([br, br0, bl0, bl], frontFace, outline ? edgeClr : null);
+    _ctx.strokeStyle = glow ?? _bright(color, 40);
+    _ctx.lineWidth   = glow ? 2.5 : 1.5;
+    _ctx.setLineDash([6, 4]);
+    _roundRect(bx, by, bw, bh, BRICK_R);
+    _ctx.stroke();
+    _ctx.setLineDash([]);
 
-  if (!outline) {
-    _drawStuds(col, row, layer + 1, w, d, topFace, edgeClr);
-  }
-
-  ctx.globalAlpha = 1;
-  ctx.shadowColor = 'transparent';
-  ctx.shadowBlur  = 0;
-}
-
-/** Draw stud bumps on the top face of a brick. */
-function _drawStuds(col, row, layer, w, d, topColor, edgeColor) {
-  const studSide = _bright(topColor, -10);
-  const studTop  = _bright(topColor,  14);
-
-  for (let ci = 0; ci < w; ci++) {
-    for (let ri = 0; ri < d; ri++) {
-      const centre = _iso(col + ci + 0.5, row + ri + 0.5, layer);
-
-      // Side band of the stud cylinder
-      _ctx.beginPath();
-      _ctx.ellipse(centre.x, centre.y + STUD_H, STUD_RX, STUD_RY, 0, 0, Math.PI * 2);
-      _ctx.fillStyle = studSide;
-      _ctx.fill();
-
-      // Top cap of the stud
-      _ctx.beginPath();
-      _ctx.ellipse(centre.x, centre.y, STUD_RX, STUD_RY, 0, 0, Math.PI * 2);
-      _ctx.fillStyle = studTop;
-      _ctx.fill();
-      _ctx.strokeStyle = edgeColor;
-      _ctx.lineWidth = 0.5;
-      _ctx.stroke();
+    // Faint stud circles
+    for (let ci = 0; ci < w; ci++) {
+      for (let ri = 0; ri < d; ri++) {
+        const cx = x + ci * TILE + TILE / 2;
+        const cy = y + ri * TILE + TILE / 2;
+        _ctx.beginPath();
+        _ctx.arc(cx, cy, STUD_R * 0.6, 0, Math.PI * 2);
+        _ctx.fillStyle = _bright(color, 25);
+        _ctx.fill();
+      }
     }
   }
-}
 
-/** Fill a polygon path and optionally stroke it. */
-function _poly(pts, fill, stroke = null) {
-  _ctx.beginPath();
-  _ctx.moveTo(pts[0].x, pts[0].y);
-  for (let i = 1; i < pts.length; i++) _ctx.lineTo(pts[i].x, pts[i].y);
-  _ctx.closePath();
-  _ctx.fillStyle = fill;
-  _ctx.fill();
-  if (stroke) {
-    _ctx.strokeStyle = stroke;
-    _ctx.lineWidth = 1;
-    _ctx.stroke();
-  }
+  _ctx.globalAlpha = 1;
+  _ctx.shadowColor = 'transparent';
+  _ctx.shadowBlur  = 0;
 }
 
 // ---------------------------------------------------------------------------
@@ -426,7 +363,7 @@ function _getCanvasPos(event) {
 function _onClick(event) {
   if (!_selectedPartId) return;
   const { x, y }    = _getCanvasPos(event);
-  const { col, row } = _screenToGrid(x, y);
+  const { col, row } = _screenToCell(x, y);
   const { baseplateWidth: W, baseplateDepth: D } = _build.brickGrid;
 
   if (col < 0 || col >= W || row < 0 || row >= D) return;
@@ -464,7 +401,7 @@ function _onClick(event) {
 
 function _onMouseMove(event) {
   const { x, y }     = _getCanvasPos(event);
-  const { col, row }  = _screenToGrid(x, y);
+  const { col, row }  = _screenToCell(x, y);
   const { baseplateWidth: W, baseplateDepth: D } = _build.brickGrid;
   _hoverCell = (col >= 0 && col < W && row >= 0 && row < D)
     ? { col, row }
@@ -484,8 +421,23 @@ function _onTouchEnd(event) {
 }
 
 // ---------------------------------------------------------------------------
-// Color utilities
+// Helpers
 // ---------------------------------------------------------------------------
+
+/** Trace a rounded-rectangle path. Caller must fill/stroke. */
+function _roundRect(x, y, w, h, r) {
+  _ctx.beginPath();
+  _ctx.moveTo(x + r, y);
+  _ctx.lineTo(x + w - r, y);
+  _ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+  _ctx.lineTo(x + w, y + h - r);
+  _ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+  _ctx.lineTo(x + r, y + h);
+  _ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+  _ctx.lineTo(x, y + r);
+  _ctx.quadraticCurveTo(x, y, x + r, y);
+  _ctx.closePath();
+}
 
 /**
  * Adjust the brightness of a '#RRGGBB' hex colour.

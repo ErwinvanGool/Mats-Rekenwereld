@@ -1427,7 +1427,6 @@ button:focus-visible {
   cursor: crosshair;
   border-radius: var(--radius-lg);
   box-shadow: 0 6px 0 var(--color-border), var(--shadow-sm);
-  background: #1a3a10;
 }
 
 /* ============================================================
