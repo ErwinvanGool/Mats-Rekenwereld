@@ -20,7 +20,7 @@ import { state, resetSession }        from './state.js';
 import { navigateTo, initNavigation } from './navigation.js';
 import { buildQuestionSet, checkAnswer, generateChoices } from './math.js';
 import { earnBlocksForAnswer, evaluateBadges, blockDisplayText, stickerDisplayText, badgeListHtml } from './rewards.js';
-import { placePart, getActiveBuild, buildPaletteHtml, getAvailableBuilds, setActiveBuild } from './builds.js';
+import { placePart, getActiveBuild, buildPaletteHtml, buildCanvasHtml, buildReferenceHtml, getAvailableBuilds, setActiveBuild, isBuildComplete } from './builds.js';
 import { initDragDrop }               from './dragdrop.js';
 import { recordAnswer, recordSession, renderProgressScreen } from './progress.js';
 import { initPinScreen, initParentPanel } from './parent-settings.js';
@@ -334,73 +334,176 @@ function renderBuildsScreen() {
   const screen = document.getElementById('screen-builds');
   if (!screen) return;
 
-  // Build selector tabs
+  const build = getActiveBuild();
+
+  // Build title
+  const titleEl = screen.querySelector('[data-active-build-title]');
+  if (titleEl) titleEl.textContent = `${build.emoji} ${build.label}`;
+
+  // Block inventory count
+  const blocksEl = screen.querySelector('[data-blocks-available]');
+  if (blocksEl) blocksEl.textContent = state.progress.earnedBlocks;
+
+  // Progress bar + label
+  const placedCount = build.parts.filter((p) => state.builds.placedParts.includes(p.id)).length;
+  const totalParts  = build.parts.length;
+  const progressBar = screen.querySelector('[data-build-progress-bar]');
+  if (progressBar) { progressBar.value = placedCount; progressBar.max = totalParts; }
+  const progressLabel = screen.querySelector('[data-build-progress-label]');
+  if (progressLabel) progressLabel.textContent = `${placedCount} / ${totalParts}`;
+
+  // Build selector tabs (attach listener only once)
   const tabsEl = screen.querySelector('[data-build-tabs]');
   if (tabsEl) {
     tabsEl.innerHTML = getAvailableBuilds()
       .map((b) => {
         const active = b.id === state.builds.activeBuildId;
         return `<button class="build-tab${active ? ' build-tab--active' : ''}"
-                        data-build-id="${b.id}">${b.label}</button>`;
+                        data-build-id="${b.id}"
+                        aria-selected="${active}">${b.emoji} ${b.label}</button>`;
       })
       .join('');
 
-    tabsEl.addEventListener('click', (event) => {
-      const btn = event.target.closest('[data-build-id]');
-      if (btn) {
-        setActiveBuild(btn.dataset.buildId);
-        renderBuildsScreen();
-      }
-    });
+    if (!tabsEl.dataset.listenerReady) {
+      tabsEl.addEventListener('click', (event) => {
+        const btn = event.target.closest('[data-build-id]');
+        if (btn) { setActiveBuild(btn.dataset.buildId); renderBuildsScreen(); }
+      });
+      tabsEl.dataset.listenerReady = '1';
+    }
   }
+
+  // Reference preview
+  const referenceEl = screen.querySelector('[data-build-reference]');
+  if (referenceEl) referenceEl.innerHTML = buildReferenceHtml();
 
   // Parts palette
   const paletteEl = screen.querySelector('[data-build-palette]');
   if (paletteEl) paletteEl.innerHTML = buildPaletteHtml();
 
-  // Build canvas / slots
+  // Visual build canvas
   const canvasEl = screen.querySelector('[data-build-canvas]');
-  if (canvasEl) {
-    const build = getActiveBuild();
-    canvasEl.innerHTML = build.parts
-      .map((part) => {
-        const placed = state.builds.placedParts.includes(part.id);
-        return `<div class="build-slot${placed ? ' build-slot--filled' : ''}"
-                     data-slot-id="${part.slot}"
-                     data-expects-part="${part.id}"
-                     aria-label="${part.label} slot">
-                  ${placed
-                    ? `<span class="build-slot__part">${part.label}</span>`
-                    : `<span class="build-slot__hint">Sleep hier</span>`}
-                </div>`;
-      })
-      .join('');
-  }
+  if (canvasEl) canvasEl.innerHTML = buildCanvasHtml();
+
+  // Hide completed overlay when switching builds
+  const overlay = screen.querySelector('[data-build-complete-overlay]');
+  if (overlay && !isBuildComplete(build.id)) overlay.hidden = true;
 }
 
 /** @param {CustomEvent} event */
 function onPartDropped({ detail: { partId, slotId } }) {
-  const screen   = document.getElementById('screen-builds');
-  const canvas   = screen?.querySelector('[data-build-canvas]');
-  const slot     = canvas?.querySelector(`[data-slot-id="${slotId}"]`);
-  const expected = slot?.dataset.expectsPart;
+  const screen      = document.getElementById('screen-builds');
+  const canvas      = screen?.querySelector('[data-build-canvas]');
+  if (!canvas) return;
 
-  if (expected !== partId) {
-    // Dropped on the wrong slot — visual shake feedback
-    slot?.classList.add('build-slot--wrong');
-    setTimeout(() => slot?.classList.remove('build-slot--wrong'), 600);
+  const correctSlot = canvas.querySelector(`[data-expects-part="${partId}"]`);
+  const targetSlot  = canvas.querySelector(`[data-slot-id="${slotId}"]`);
+
+  // Already placed – ignore
+  if (correctSlot?.classList.contains('build-slot--filled')) return;
+
+  // Dropped on wrong slot: gentle shake + glow on correct target
+  if (targetSlot && targetSlot !== correctSlot) {
+    targetSlot.classList.add('build-slot--wrong');
+    setTimeout(() => targetSlot.classList.remove('build-slot--wrong'), 650);
+    correctSlot?.classList.add('build-slot--hint');
+    setTimeout(() => correctSlot?.classList.remove('build-slot--hint'), 1400);
+    showBuildFeedback('🤔 Bijna! Zoek het goede plekje!', false);
     return;
   }
 
   const { placed, buildCompleted } = placePart(partId);
   if (placed) {
-      updateBlockDisplay();
+    updateBlockDisplay();
     renderBuildsScreen();
-
+    showBuildFeedback('⭐ Super! Goed geplaatst!', true);
+    playBrickSound();
     if (buildCompleted) {
-      setTimeout(() => alert('🎉 Gefeliciteerd! Je hebt dit bouwwerk afgemaakt!'), 100);
+      setTimeout(() => showBuildComplete(), 500);
     }
   }
+}
+
+/**
+ * Show a brief toast message on the builds screen.
+ * @param {string}  msg
+ * @param {boolean} isPositive
+ */
+function showBuildFeedback(msg, isPositive) {
+  const screen = document.getElementById('screen-builds');
+  const el     = screen?.querySelector('[data-build-feedback]');
+  if (!el) return;
+  el.textContent = msg;
+  el.className   = `builds__feedback builds__feedback--${isPositive ? 'ok' : 'hint'}`;
+  el.hidden      = false;
+  clearTimeout(el._feedbackTimer);
+  el._feedbackTimer = setTimeout(() => { el.hidden = true; }, 2000);
+}
+
+/** Celebrate a completed build with confetti overlay. */
+function showBuildComplete() {
+  const screen  = document.getElementById('screen-builds');
+  const build   = getActiveBuild();
+  const overlay = screen?.querySelector('[data-build-complete-overlay]');
+  if (!overlay) return;
+
+  const dots = Array.from({ length: 24 }, (_, i) =>
+    `<span class="confetti-dot" style="--i:${i};--hue:${(i * 15) % 360}"></span>`
+  ).join('');
+
+  overlay.innerHTML = `
+    <div class="complete-overlay__confetti" aria-hidden="true">${dots}</div>
+    <span class="complete-overlay__icon" aria-hidden="true">🎉</span>
+    <p class="complete-overlay__title">Klaar!</p>
+    <p class="complete-overlay__badge">${build.completionBadge}</p>
+    <div class="complete-overlay__svg" aria-label="${build.label} klaar">${build.referenceSvg}</div>
+    <button class="btn btn--cta complete-overlay__btn" data-nav="screen-worldmap">
+      🌍 Terug naar de kaart
+    </button>
+  `;
+  overlay.hidden = false;
+  playCompleteSound();
+}
+
+/** Play a short "brick snap" tone using the Web Audio API. */
+function playBrickSound() {
+  if (!state.settings.soundEnabled) return;
+  try {
+    const ctx  = new (window.AudioContext || window.webkitAudioContext)();
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(440, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(660, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.25, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.35);
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.35);
+  } catch (_) { /* audio not available */ }
+}
+
+/** Play a celebratory fanfare on build completion. */
+function playCompleteSound() {
+  if (!state.settings.soundEnabled) return;
+  try {
+    const ctx   = new (window.AudioContext || window.webkitAudioContext)();
+    const notes = [523, 659, 784, 1047]; // C5 E5 G5 C6
+    notes.forEach((freq, i) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      const t = ctx.currentTime + i * 0.13;
+      osc.frequency.setValueAtTime(freq, t);
+      gain.gain.setValueAtTime(0.22, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      osc.start(t);
+      osc.stop(t + 0.45);
+    });
+  } catch (_) { /* audio not available */ }
 }
 
 // ---------------------------------------------------------------------------

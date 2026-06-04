@@ -416,6 +416,10 @@
 
       <main class="builds__canvas-col" aria-label="Bouwveld">
         <p class="builds__col-heading">&#127959;&#65039; Jouw bouwwerk</p>
+
+        <!-- Reference preview: filled by JS via buildReferenceHtml() -->
+        <div data-build-reference aria-live="polite"></div>
+
         <div class="build-canvas"
              data-build-canvas
              aria-label="Bouwveld: sleep stukken hierheen"
@@ -431,9 +435,15 @@
          hidden
          role="status"
          aria-live="assertive">
-      <span class="builds__complete-icon" aria-hidden="true">&#127881;</span>
-      <p class="builds__complete-msg">Klaar! Super bouwen!</p>
+      <!-- Content injected by JS: showBuildComplete() -->
     </div>
+
+    <!-- Feedback toast (correct / wrong placement) -->
+    <p class="builds__feedback"
+       data-build-feedback
+       hidden
+       role="status"
+       aria-live="polite"></p>
   </section>
 
   <!-- ======================================================================
