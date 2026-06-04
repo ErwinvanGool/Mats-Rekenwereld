@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const pinScreen    = document.getElementById('screen-parent');
   const parentPanel  = document.getElementById('screen-parent-panel');
   if (pinScreen)   initPinScreen(pinScreen, parentPanel);
-  if (parentPanel) initParentPanel(parentPanel);
+  if (parentPanel) initParentPanel(parentPanel, renderParentPanel);
 
   // 8. World map
   initWorldMap();
@@ -873,7 +873,15 @@ function renderParentPanel() {
   if (!settingsEl) return;
 
   settingsEl.innerHTML = `
-    <h3>Oefeningen</h3>
+    <div class="parent-progress-summary">
+      <div class="parent-stat">✅ <strong>${state.progress.totalCorrect}</strong> goed</div>
+      <div class="parent-stat">🔥 <strong>${state.progress.bestStreak}</strong> reeks</div>
+      <div class="parent-stat">🧱 <strong>${state.progress.earnedBlocks}</strong> blokken</div>
+      <div class="parent-stat">⭐ <strong>${state.progress.earnedStickers}</strong> stickers</div>
+      <div class="parent-stat">🏗️ <strong>${state.builds.completedBuilds.length}</strong> bouwsels</div>
+    </div>
+
+    <h3 class="settings-group__heading">Oefeningen</h3>
     ${Object.values(OPERATIONS)
       .map((op) => {
         const enabled = state.settings.enabledOperations.includes(op.id);
@@ -894,19 +902,22 @@ function renderParentPanel() {
       })
       .join('')}
 
-    <h3>Geluid</h3>
-    <label class="parent-setting__label">
-      <input type="checkbox" data-sound-toggle ${state.settings.soundEnabled ? 'checked' : ''}>
-      Geluid inschakelen
-    </label>
+    <h3 class="settings-group__heading">Geluid</h3>
+    <div class="parent-setting">
+      <span class="parent-setting__label">🔊 Geluid inschakelen</span>
+      <label class="toggle">
+        <input type="checkbox" data-sound-toggle ${state.settings.soundEnabled ? 'checked' : ''}>
+        <span class="toggle__track"></span>
+      </label>
+    </div>
 
-    <h3>Beheer</h3>
+    <h3 class="settings-group__heading">Beheer</h3>
     <div class="parent-setting__actions">
       <button class="btn btn--danger" data-action="reset-progress">Voortgang wissen</button>
       <button class="btn"            data-action="change-pin">Pincode wijzigen</button>
     </div>
 
-    <h3>Badges verdiend</h3>
+    <h3 class="settings-group__heading">Badges verdiend</h3>
     <ul class="badge-list">${badgeListHtml()}</ul>
   `;
 }

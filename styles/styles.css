@@ -1616,6 +1616,8 @@ button:focus-visible {
    PARENT PANEL (settings dashboard)
    ============================================================ */
 .parent-panel {
+  display: flex;
+  flex-direction: column;
   gap: 1.25rem;
   max-width: 760px;
   background: var(--color-surface);
@@ -1632,6 +1634,37 @@ button:focus-visible {
   color: var(--c-purple-dark);
   border-bottom: 3px solid #e0d9f7;
   padding-bottom: 0.75rem;
+}
+
+.settings-group__heading {
+  font-size: 0.8rem;
+  font-weight: 900;
+  color: var(--c-purple-dark);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0.5rem 0 -0.5rem;
+}
+
+.parent-progress-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  background: linear-gradient(135deg, #f0ebff 0%, #e8f4ff 100%);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem 1rem;
+}
+
+.parent-stat {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--c-purple-dark);
+  background: #fff;
+  border-radius: var(--radius-md);
+  padding: 0.35rem 0.75rem;
+  box-shadow: 0 2px 0 rgba(124,92,232,.15);
 }
 
 /* Individual setting row */

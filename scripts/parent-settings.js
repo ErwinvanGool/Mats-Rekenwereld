@@ -169,7 +169,7 @@ export function initPinScreen(pinScreen, parentPanel) {
  * Initialise the parent settings panel with live controls.
  * @param {HTMLElement} panel  – the #screen-parent-panel element
  */
-export function initParentPanel(panel) {
+export function initParentPanel(panel, onAfterReset) {
   // Operation toggles
   panel.addEventListener('change', (event) => {
     const toggle = event.target.closest('[data-operation-toggle]');
@@ -194,6 +194,7 @@ export function initParentPanel(panel) {
       if (window.confirm('Weet je zeker dat je alle voortgang wilt wissen?')) {
         resetProgress();
         alert('Voortgang gewist.');
+        if (typeof onAfterReset === 'function') onAfterReset();
       }
     }
 
