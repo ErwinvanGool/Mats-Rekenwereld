@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mats Rekenwereld – een leuk reken-avontuur voor Mats!" />
+  <title>Mats Rekenwereld</title>
+  <link rel="stylesheet" href="styles/styles.css" />
+</head>
+<body>
+
+  <!-- ======================================================================
+       App header – visible on every screen
+       ====================================================================== -->
+  <header class="app-header">
+    <span class="app-header__title">🌍 Mats Rekenwereld</span>
+    <span class="app-header__star" data-star-display>⭐ 0</span>
+  </header>
+
+  <!-- ======================================================================
+       Screen: Home / Main menu
+       ID: screen-home
+       ====================================================================== -->
+  <section id="screen-home" class="screen screen--active home" aria-label="Hoofdmenu">
+    <div class="home__hero">
+      <div class="home__avatar" aria-hidden="true">🧒</div>
+      <h1 class="home__title">Hallo Mats!</h1>
+      <p class="home__subtitle">Klaar om te rekenen?</p>
+    </div>
+
+    <nav class="home__menu" aria-label="Hoofdnavigatie">
+      <button class="menu-btn menu-btn--math" data-nav="screen-operation"
+              aria-label="Ga naar rekenen">
+        <span class="menu-btn__icon">🔢</span>
+        Rekenen
+      </button>
+      <button class="menu-btn menu-btn--builds" data-nav="screen-builds"
+              aria-label="Ga naar de bouwplaats">
+        <span class="menu-btn__icon">🏗️</span>
+        Bouwen
+      </button>
+      <button class="menu-btn menu-btn--progress" data-nav="screen-progress"
+              aria-label="Bekijk voortgang">
+        <span class="menu-btn__icon">📊</span>
+        Voortgang
+      </button>
+      <button class="menu-btn menu-btn--parent" data-nav="screen-parent"
+              aria-label="Ga naar ouderinstellingen">
+        <span class="menu-btn__icon">🔒</span>
+        Ouders
+      </button>
+    </nav>
+  </section>
+
+  <!-- ======================================================================
+       Screen: Operation selection
+       ID: screen-operation
+       ====================================================================== -->
+  <section id="screen-operation" class="screen operation-screen" aria-label="Kies een oefening"
+           aria-hidden="true">
+    <button class="nav-back" data-nav="screen-home">← Terug</button>
+    <h2 class="operation-screen__title">Wat wil je oefenen?</h2>
+    <div class="operation-grid" data-operation-grid aria-label="Keuze van rekensoort">
+      <!-- Rendered dynamically by main.js → renderOperationCards() -->
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       Screen: Exercise (active question)
+       ID: screen-exercise
+       ====================================================================== -->
+  <section id="screen-exercise" class="screen exercise" aria-label="Rekenoefening"
+           aria-hidden="true">
+    <progress class="exercise__progress-bar" data-progress-bar value="1" max="10"
+              aria-label="Vraag voortgang"></progress>
+    <p class="exercise__counter" data-question-counter aria-live="polite">Vraag 1 van 10</p>
+
+    <div class="exercise__problem" data-problem aria-live="assertive" role="status">
+      <!-- e.g. "4 + 7 = ?" -->
+    </div>
+
+    <!-- Multiple-choice answer buttons (default mode) -->
+    <div class="exercise__choices" data-choices aria-label="Keuze antwoorden">
+      <!-- Rendered dynamically per question -->
+    </div>
+
+    <!-- Optional typed-input row (shown when settings prefer typing) -->
+    <div class="exercise__input-row" hidden>
+      <label for="answer-input" class="sr-only">Jouw antwoord</label>
+      <input id="answer-input" class="exercise__input" type="number" min="0"
+             data-answer-input inputmode="numeric" pattern="[0-9]*"
+             placeholder="?" autocomplete="off" />
+      <button class="btn" data-action="submit-answer" aria-label="Controleer antwoord">OK</button>
+    </div>
+
+    <p class="exercise__feedback" data-feedback aria-live="polite" role="status"></p>
+  </section>
+
+  <!-- ======================================================================
+       Screen: Session result
+       ID: screen-result
+       ====================================================================== -->
+  <section id="screen-result" class="screen result" aria-label="Resultaat" aria-hidden="true">
+    <div data-result-summary aria-live="polite">
+      <!-- Rendered by main.js → renderResultScreen() -->
+    </div>
+
+    <div class="result__actions">
+      <button class="btn btn--secondary" data-nav="screen-operation">
+        Nog een keer
+      </button>
+      <button class="btn btn--ghost" data-nav="screen-builds">
+        🏗️ Ga bouwen
+      </button>
+      <button class="btn btn--ghost" data-nav="screen-home">
+        🏠 Naar huis
+      </button>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       Screen: Builds / Workshop
+       ID: screen-builds
+       ====================================================================== -->
+  <section id="screen-builds" class="screen builds" aria-label="Bouwplaats" aria-hidden="true">
+    <button class="nav-back" data-nav="screen-home">← Terug</button>
+    <h2>🏗️ Bouwplaats</h2>
+
+    <!-- Build project selector -->
+    <div class="build-tabs" data-build-tabs role="tablist" aria-label="Bouwprojecten">
+      <!-- Rendered by main.js → renderBuildsScreen() -->
+    </div>
+
+    <div class="builds__layout">
+      <!-- Left: draggable parts palette -->
+      <aside>
+        <p><strong>Bouwstukken</strong></p>
+        <div class="build-palette" data-build-palette aria-label="Beschikbare bouwstukken">
+          <!-- Rendered dynamically -->
+        </div>
+      </aside>
+
+      <!-- Right: drop slots canvas -->
+      <main>
+        <p><strong>Jouw bouwwerk</strong></p>
+        <div class="build-canvas" data-build-canvas aria-label="Bouwveld">
+          <!-- Rendered dynamically -->
+        </div>
+      </main>
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       Screen: Progress overview
+       ID: screen-progress
+       ====================================================================== -->
+  <section id="screen-progress" class="screen" aria-label="Voortgang" aria-hidden="true">
+    <button class="nav-back" data-nav="screen-home">← Terug</button>
+    <div class="progress__content">
+      <!-- Rendered by progress.js → renderProgressScreen() -->
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       Screen: Parent PIN entry
+       ID: screen-parent
+       ====================================================================== -->
+  <section id="screen-parent" class="screen parent-pin" aria-label="Ouderzone invoer"
+           aria-hidden="true">
+    <button class="nav-back" data-nav="screen-home">← Terug</button>
+    <h2 class="parent-pin__title">🔒 Ouderzone</h2>
+    <p>Voer de 4-cijferige pincode in</p>
+
+    <div class="pin-display" data-pin-display aria-label="Ingevoerde pincode" aria-live="polite">
+      ○○○○
+    </div>
+
+    <div class="pin-keypad" data-pin-keypad role="group" aria-label="Cijfertoetsenbord">
+      <button class="pin-key" data-key="1" aria-label="1">1</button>
+      <button class="pin-key" data-key="2" aria-label="2">2</button>
+      <button class="pin-key" data-key="3" aria-label="3">3</button>
+      <button class="pin-key" data-key="4" aria-label="4">4</button>
+      <button class="pin-key" data-key="5" aria-label="5">5</button>
+      <button class="pin-key" data-key="6" aria-label="6">6</button>
+      <button class="pin-key" data-key="7" aria-label="7">7</button>
+      <button class="pin-key" data-key="8" aria-label="8">8</button>
+      <button class="pin-key" data-key="9" aria-label="9">9</button>
+      <button class="pin-key pin-key--wide" data-key="del" aria-label="Wissen">⌫</button>
+      <button class="pin-key" data-key="0" aria-label="0">0</button>
+      <button class="pin-key pin-key--ok" data-key="ok" aria-label="Bevestigen">OK</button>
+    </div>
+
+    <p class="pin-error" data-pin-error role="alert" aria-live="assertive"></p>
+  </section>
+
+  <!-- ======================================================================
+       Screen: Parent settings panel (after PIN)
+       ID: screen-parent-panel
+       ====================================================================== -->
+  <section id="screen-parent-panel" class="screen parent-panel" aria-label="Ouderinstellingen"
+           aria-hidden="true">
+    <button class="nav-back" data-nav="screen-home">← Terug naar huis</button>
+    <h2 class="parent-panel__title">⚙️ Instellingen</h2>
+
+    <div data-settings-content>
+      <!-- Rendered by main.js → renderParentPanel() -->
+    </div>
+  </section>
+
+  <!-- ======================================================================
+       Entry point script (ES module)
+       ====================================================================== -->
+  <script type="module" src="scripts/main.js"></script>
+</body>
+</html>
