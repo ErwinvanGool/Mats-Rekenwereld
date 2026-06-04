@@ -741,6 +741,19 @@ button:focus-visible {
 .exercise__feedback--correct { color: var(--c-green); }
 .exercise__feedback--wrong   { color: var(--c-red); }
 
+.exercise__block-earned {
+  font-size: var(--font-size-2xl);
+  font-weight: 900;
+  color: var(--c-orange);
+  text-align: center;
+  animation: blockEarnedPop 0.4s cubic-bezier(.34,1.56,.64,1) both;
+}
+
+@keyframes blockEarnedPop {
+  from { opacity: 0; transform: scale(0.5) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
 /* ============================================================
    RESULT SCREEN – big celebration
    ============================================================ */
@@ -957,6 +970,25 @@ button:focus-visible {
   border: 3px solid var(--color-border);
   flex: 1;
   overflow-y: auto;
+}
+
+.builds__earn-cta {
+  margin-top: 0.75rem;
+  display: flex;
+  justify-content: center;
+}
+
+.builds__earn-cta-btn {
+  width: 100%;
+  font-size: var(--font-size-lg);
+  padding: 0.9rem 1rem;
+  min-height: 60px;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.04); }
 }
 
 /* Single draggable brick in palette */

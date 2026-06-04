@@ -28,9 +28,7 @@
     <button class="app-header__title" data-nav="screen-home" aria-label="Terug naar startscherm">🌍 Mats Rekenwereld</button>
 
     <div class="app-header__right">
-      <span class="app-header__stars" data-star-display aria-label="Verdiende sterren">
-        &#11088; <span data-star-count>0</span>
-      </span>
+      <span class="app-header__stars" data-block-display aria-label="Verdiende blokken">&#129521; 0</span>
       <button class="app-header__parent-btn"
               id="parent-gate-btn"
               data-nav="screen-parent"
@@ -399,6 +397,14 @@
              data-build-palette
              aria-label="Sleep bouwstukken naar het bouwveld">
           <!-- Rendered by JS -->
+        </div>
+        <!-- CTA shown when all palette items are locked -->
+        <div class="builds__earn-cta" data-earn-cta hidden aria-live="polite">
+          <button class="btn btn--cta builds__earn-cta-btn"
+                  data-nav="screen-operation"
+                  aria-label="Ga rekenen om blokken te verdienen">
+            &#128290; Ga rekenen!
+          </button>
         </div>
       </aside>
 

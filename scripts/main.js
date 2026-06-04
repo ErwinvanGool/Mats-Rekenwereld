@@ -327,6 +327,14 @@ function submitAnswer(choiceValue) {
     // Animate chosen button
     clickedBtn?.classList.add('choice-btn--correct');
 
+    // Flash the block-earned element
+    const blockEarnedEl = screen?.querySelector('[data-block-earned]');
+    if (blockEarnedEl) {
+      blockEarnedEl.textContent = `+${rewardInfo.totalBlocks} 🧱`;
+      blockEarnedEl.hidden = false;
+      setTimeout(() => { blockEarnedEl.hidden = true; }, 1100);
+    }
+
     if (feedback) {
       const bonusText = rewardInfo.bonusBlocks > 0
         ? ` +${rewardInfo.bonusBlocks} bonus! 🎉` : '';
@@ -525,6 +533,22 @@ function renderBuildsScreen() {
   // Hide completed overlay when switching builds
   const overlay = screen.querySelector('[data-build-complete-overlay]');
   if (overlay && !isBuildComplete(build.id)) overlay.hidden = true;
+
+  // Show "earn more blocks" CTA if all remaining parts are locked
+  const earnCtaEl = screen.querySelector('[data-earn-cta]');
+  if (earnCtaEl) {
+    let hasUnlocked = false;
+    if (build.brickGrid) {
+      hasUnlocked = build.brickGrid.bricks.some(
+        (b) => !isPartPlaced(b.partId) && isPartUnlocked({ blocksToUnlock: b.blocksToUnlock })
+      );
+    } else {
+      hasUnlocked = build.parts.some(
+        (p) => !isPartPlaced(p.id) && isPartUnlocked(p)
+      );
+    }
+    earnCtaEl.hidden = hasUnlocked || isBuildComplete(build.id);
+  }
 }
 
 /**
