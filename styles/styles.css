@@ -98,6 +98,9 @@ body {
 
 img { display: block; max-width: 100%; }
 
+/* Ensure [hidden] always wins over CSS display rules (e.g. display:flex) */
+[hidden] { display: none !important; }
+
 button {
   cursor: pointer;
   font-family: inherit;
