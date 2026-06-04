@@ -1005,6 +1005,7 @@ button:focus-visible {
   gap: 0.5rem;
   transition: transform var(--transition), border-color var(--transition), box-shadow var(--transition);
   user-select: none;
+  touch-action: none;
   box-shadow: 0 4px 0 var(--color-border);
   position: relative; top: 0;
 }
@@ -1111,6 +1112,16 @@ button:focus-visible {
 }
 
 .build-slot__hint  { color: var(--color-text-muted); font-size: 0.82rem; font-style: italic; }
+.build-slot__hint-icon {
+  font-size: 1.5rem;
+  display: block;
+  animation: hintBounce 1s ease-in-out infinite;
+}
+
+@keyframes hintBounce {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(6px); }
+}
 .build-slot__part  { font-weight: 900; color: var(--c-green-dark); font-size: var(--font-size-lg); }
 
 /* Emoji inside slots */
@@ -1154,6 +1165,23 @@ button:focus-visible {
   color: var(--color-text-muted);
   white-space: nowrap;
 }
+
+/* ============================================================
+   LEGO MODE REFERENCE THUMBNAIL
+   ============================================================ */
+.lego-reference {
+  width: 110px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #f8f4ff;
+  border: 3px solid var(--color-border);
+  box-shadow: 0 4px 0 var(--color-border);
+  margin-bottom: 0.75rem;
+}
+
+.lego-reference svg { width: 100%; height: 100%; }
 
 /* ============================================================
    BUILD REFERENCE PANEL

@@ -107,6 +107,9 @@ function onPointerDown(event) {
   const part = event.target.closest('[data-part-id][draggable="true"]');
   if (!part) return;
 
+  // Prevent iOS Safari from scrolling instead of dragging the block.
+  event.preventDefault();
+
   draggedPartId = part.dataset.partId;
 
   // Create a visual ghost that follows the pointer

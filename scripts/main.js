@@ -508,8 +508,11 @@ function renderBuildsScreen() {
   const paletteEl  = screen.querySelector('[data-build-palette]');
 
   if (build.brickGrid) {
-    // LEGO canvas mode
-    if (htmlRefEl) htmlRefEl.hidden = true;
+    // LEGO canvas mode — show a compact reference thumbnail above the canvas
+    if (htmlRefEl) {
+      htmlRefEl.hidden = false;
+      htmlRefEl.innerHTML = `<div class="lego-reference" aria-label="Voorbeeld ${build.label}" role="img">${build.referenceSvg}</div>`;
+    }
     if (htmlCvsEl) htmlCvsEl.hidden = true;
     if (legoCvsEl) legoCvsEl.hidden = false;
 

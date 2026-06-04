@@ -175,7 +175,7 @@ export function buildCanvasHtml() {
                  <span class="build-slot__part">${part.label}</span>`;
       } else if (unlocked) {
         inner = `<span class="build-slot__emoji build-slot__emoji--ghost" aria-hidden="true">${emoji}</span>
-                 <span class="build-slot__hint">Sleep hier</span>`;
+                 <span class="build-slot__hint-icon" aria-hidden="true">👇</span>`;
       } else {
         inner = `<span class="build-slot__emoji build-slot__emoji--ghost" aria-hidden="true">🔒</span>
                  <span class="build-slot__hint">${part.blocksToUnlock} 🧱</span>`;
