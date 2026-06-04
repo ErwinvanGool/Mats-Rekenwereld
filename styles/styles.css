@@ -433,6 +433,115 @@ button:focus-visible {
 }
 
 /* ============================================================
+   BUILD SELECTION SCREEN (screen-build-select)
+   ============================================================ */
+.screen--build-select {
+  align-items: center;
+  justify-content: center;
+  gap: 1.25rem;
+}
+
+.build-select__detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 480px;
+}
+
+.build-select__preview {
+  width: 100%;
+  max-width: 260px;
+  max-height: 180px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  background: #f8f4ff;
+  border: 3px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
+  flex-shrink: 0;
+}
+
+.build-select__preview svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.build-select__name {
+  font-size: var(--font-size-xl);
+  font-weight: 900;
+  color: var(--color-text);
+  text-align: center;
+}
+
+.build-select__meta {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  font-weight: 800;
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+}
+
+.build-select__progress-wrap {
+  width: 100%;
+  height: 14px;
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.build-select__progress-bar {
+  height: 100%;
+  width: var(--progress, 0%);
+  background: linear-gradient(90deg, var(--c-teal) 0%, var(--c-green) 100%);
+  border-radius: var(--radius-full);
+  transition: width 0.4s ease;
+}
+
+.build-select__progress-label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-muted);
+  font-weight: 700;
+}
+
+.build-select__done-badge {
+  font-size: var(--font-size-lg);
+  font-weight: 900;
+  color: var(--c-green-dark);
+}
+
+.build-select__actions,
+.build-select__locked {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 360px;
+  align-items: stretch;
+}
+
+.build-select__actions .btn,
+.build-select__locked .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.build-select__lock-icon {
+  font-size: 3rem;
+  text-align: center;
+  display: block;
+}
+
+.build-select__lock-msg {
+  text-align: center;
+  font-weight: 700;
+  font-size: var(--font-size-lg);
+  color: var(--color-text-muted);
+}
+
+/* ============================================================
    OPERATION SELECTION SCREEN
    ============================================================ */
 .operation-screen {
