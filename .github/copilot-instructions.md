@@ -176,7 +176,11 @@ This project uses two custom agents for iterative improvement:
 
 2. **Build Implementer** (.github/agents/build-implementer.agent.md)
    Implements targeted improvements based on playtester feedback
-
+   
+3. **Parent Tester** (.github/agents/parent-tester.agent.md)
+   Reviews the parent settings UX from a busy parent's perspective
+   and saves reviews to docs/reviews/parentreview
+   
 Shared context: docs/mats-game-context.md
 Evaluation rubric: docs/build-ux-rubric.md
 
